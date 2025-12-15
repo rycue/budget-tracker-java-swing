@@ -88,6 +88,17 @@ public class GoalDialog extends JDialog {
         add(formPanel, BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
     }
+    public GoalDialog(Window parent, Goal goalToEdit) {
+        this(parent);
+
+        setTitle("Edit Goal");
+
+        // Pre-fill fields
+        categoryBox.setSelectedItem(goalToEdit.getCategory());
+        priceField.setText(String.valueOf(goalToEdit.getPrice()));
+        dateField.setText(goalToEdit.getDate());
+        noteField.setText(goalToEdit.getNote());
+    }
 
     public boolean isSaved() { return saved; }
 
