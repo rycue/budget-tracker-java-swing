@@ -35,7 +35,7 @@ public class AccountTab extends JPanel {
         styleButton(loginBtn);
 
         loginBtn.addActionListener(e -> {
-            LoginDialog login = new LoginDialog((JFrame) SwingUtilities.getWindowAncestor(this));
+            LoginDialogOld login = new LoginDialogOld((JFrame) SwingUtilities.getWindowAncestor(this));
             login.setSize(400, 300); // Make login bigger
             login.setVisible(true);
             refresh();

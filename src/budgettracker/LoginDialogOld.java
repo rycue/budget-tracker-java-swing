@@ -3,16 +3,16 @@ package budgettracker;
 import javax.swing.*;
 import java.awt.*;
 
-public class LoginDialog extends JDialog {
+public class LoginDialogOld extends JDialog {
 
     private JTextField usernameField;
     private JPasswordField passwordField;
 
     private boolean success = false;
 
-    public LoginDialog(JFrame parent) {
+    public LoginDialogOld(JFrame parent) {
         super(parent, "Login", true);
-        setSize(450, 350); // Optimized size
+        setSize(575, 350); // Optimized size
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.decode("#121212")); // Dark background
@@ -68,6 +68,7 @@ public class LoginDialog extends JDialog {
         styleButton(loginBtn);
         styleButton(registerBtn);
         styleButton(forgotBtn);
+        forgotBtn.setPreferredSize(new Dimension(180, 35));
 
         loginBtn.addActionListener(e -> {
             String user = usernameField.getText();
@@ -80,7 +81,7 @@ public class LoginDialog extends JDialog {
             }
         });
 
-        registerBtn.addActionListener(e -> new RegisterDialog(this).setVisible(true));
+        registerBtn.addActionListener(e -> new RegisterDialogOld(this).setVisible(true));
         forgotBtn.addActionListener(e -> new ForgotPasswordDialog(this).setVisible(true));
 
         buttonPanel.add(loginBtn);

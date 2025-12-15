@@ -3,15 +3,15 @@ package budgettracker;
 import javax.swing.*;
 import java.awt.*;
 
-public class RegisterDialog extends JDialog {
+public class RegisterDialogOld extends JDialog {
 
-    private JTextField firstField, lastField, mobileField, emailField, userField;
+    private JTextField nameField, mobileField, emailField, userField;
     private JPasswordField passField;
 
     //NEW FIELDS
     private JTextField questionField, answerField;
 
-    public RegisterDialog(Window parent) {
+    public RegisterDialogOld(Window parent) {
         super(parent, "Register", ModalityType.APPLICATION_MODAL);
         setSize(350, 430);
         setLocationRelativeTo(parent);
@@ -20,9 +20,7 @@ public class RegisterDialog extends JDialog {
         JPanel form = new JPanel();
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
 
-        form.add(makeField("First Name: ", firstField = new JTextField(15)));
-        form.add(makeField("Last Name: ", lastField = new JTextField(15)));
-        form.add(makeField("Mobile: ", mobileField = new JTextField(15)));
+        form.add(makeField("Name: ", nameField = new JTextField(15)));
         form.add(makeField("Email: ", emailField = new JTextField(15)));
         form.add(makeField("Username: ", userField = new JTextField(15)));
         form.add(makeField("Password: ", passField = new JPasswordField(15)));
@@ -36,8 +34,7 @@ public class RegisterDialog extends JDialog {
         registerBtn.addActionListener(e -> {
 
             // Basic validation
-            if (firstField.getText().isBlank() ||
-                lastField.getText().isBlank() ||
+            if (nameField.getText().isBlank() ||
                 mobileField.getText().isBlank() ||
                 emailField.getText().isBlank() ||
                 userField.getText().isBlank() ||
@@ -51,8 +48,7 @@ public class RegisterDialog extends JDialog {
 
             // Create the user with security question & answer
             UserAccount user = new UserAccount(
-                    firstField.getText(),
-                    lastField.getText(),
+                    nameField.getText(),
                     mobileField.getText(),
                     emailField.getText(),
                     userField.getText(),
