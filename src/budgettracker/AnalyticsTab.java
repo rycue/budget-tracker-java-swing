@@ -72,7 +72,7 @@ public class AnalyticsTab extends JPanel {
             double balance = entry.getValue();
             double change = balance - prev;
             double result = prev != 0 ? (change / prev) * 100 : 0;
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     entry.getKey(),
                     String.format("₱%.2f", balance),
                     String.format("%+.2f", change),

@@ -1,5 +1,7 @@
 package budgettracker;
 
+import java.time.LocalDate;
+
 public class Transaction {
     public enum Type { INCOME, EXPENSE }
 
