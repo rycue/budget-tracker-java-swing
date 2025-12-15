@@ -72,7 +72,7 @@ public class BudgetTrackerGUI extends JFrame {
             
             FlatDarculaLaf.setup();
 
-            LoginDialogOld login = new LoginDialogOld(null);
+            LoginDialog login = new LoginDialog(null);
             login.setVisible(true);
 
             if (login.isSuccess()) {
