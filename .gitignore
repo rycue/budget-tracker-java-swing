@@ -1,0 +1,6 @@
+# Compiled class files
+*.class
+
+# Generated directories like build/ and dist/
+/build/
+/dist/
