@@ -2,7 +2,6 @@ package budgettracker;
 
 import javax.swing.*;
 import java.awt.*;
-import com.formdev.flatlaf.FlatDarkLaf;
 
 public class LoginDialog extends JDialog {
 
@@ -13,8 +12,7 @@ public class LoginDialog extends JDialog {
 
     public LoginDialog(JFrame parent) {
         super(parent, "Login", true);
-        FlatDarkLaf.setup();
-        setSize(575, 350); // Optimized size
+        setSize(450, 350); // Optimized size
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.decode("#121212")); // Dark background
@@ -70,7 +68,6 @@ public class LoginDialog extends JDialog {
         styleButton(loginBtn);
         styleButton(registerBtn);
         styleButton(forgotBtn);
-        forgotBtn.setPreferredSize(new Dimension(180, 35));
 
         loginBtn.addActionListener(e -> {
             String user = usernameField.getText();

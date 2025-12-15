@@ -4,3 +4,5 @@
 # Generated directories like build/ and dist/
 /build/
 /dist/
+/BudgetTrackerGUI/build/
+/BudgetTrackerGUI/nbproject/private/

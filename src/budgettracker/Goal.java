@@ -1,30 +1,41 @@
 package budgettracker;
 
+import java.time.LocalDate;
+
 public class Goal {
+    private String name;
+    private double target;
+    private double progress;
+    private LocalDate dateCreated;
 
-    private String category;
-    private double price;
-    private String date;
-    private String note;
-
-    public Goal(String category, double price, String date, String note) {
-        this.category = category;
-        this.price = price;
-        this.date = date;
-        this.note = note;
+    // Constructor
+    public Goal(String name, double target) {
+        this.name = name;
+        this.target = target;
+        this.progress = 0;
+        this.dateCreated = LocalDate.now();
     }
 
-    public String getCategory() { return category; }
-    public double getPrice() { return price; }
-    public String getDate() { return date; }
-    public String getNote() { return note; }
+    public String getName() { return name; }
+    public double getTarget() { return target; }
+    public double getProgress() { return progress; }
+    public LocalDate getDateCreated() { return dateCreated; }
 
-    @Override
-    public String toString() {
-        return String.format("%s | $%.2f | %s | %s",
-                category,
-                price,
-                date,
-                note.isBlank() ? "No note" : note);
+    // Increase progress when a transaction applies to this goal
+    public void applyTransaction(Transaction t) {
+        if (t.getType() == Transaction.Type.EXPENSE) {
+            progress += t.getAmount();
+            if (progress > target) progress = target;
+        }
+    }
+
+    // Check if goal is completed
+    public boolean isCompleted() {
+        return progress >= target;
+    }
+
+    // Reset goal progress
+    public void reset() {
+        progress = 0;
     }
 }
