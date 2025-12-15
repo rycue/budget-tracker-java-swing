@@ -14,16 +14,18 @@ public class BudgetTrackerGUI extends JFrame {
         setTitle("Budget Tracker");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        getContentPane().setBackground(Color.BLACK); // background
+        getContentPane().setBackground(Color.BLACK);
 
-        // Tabs 
+        // TAB PANE
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setBackground(Color.BLACK);
         tabbedPane.setForeground(Color.GREEN);
 
+        // CREATE TABS
         dashboardTab = new DashboardTab();
-        goalsTab = new GoalsTab();
         analyticsTab = new AnalyticsTab(dashboardTab);
+        dashboardTab.setAnalyticsTab(analyticsTab);
+        goalsTab = new GoalsTab(dashboardTab);
         accountTab = new AccountTab();
 
         tabbedPane.addTab("Dashboard", dashboardTab);
@@ -33,13 +35,14 @@ public class BudgetTrackerGUI extends JFrame {
 
         add(tabbedPane, BorderLayout.CENTER);
 
-        // GLOBAL Add Transaction button 
+        // GLOBAL ADD TRANSACTION BUTTON
         JButton addTransactionBtn = new JButton("Add Transaction");
         styleButton(addTransactionBtn);
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setBackground(Color.BLACK);
         bottomPanel.add(addTransactionBtn);
+
         add(bottomPanel, BorderLayout.SOUTH);
 
         addTransactionBtn.addActionListener(e -> openTransactionDialog());
@@ -55,7 +58,12 @@ public class BudgetTrackerGUI extends JFrame {
 
         if (dialog.isSaved()) {
             Transaction t = dialog.getTransaction();
+
+            // Update dashboard
             dashboardTab.addTransactionFromOutside(t);
+
+            // Update goals automatically
+            goalsTab.applyTransactionToGoals(t);
         }
     }
 
@@ -66,17 +74,20 @@ public class BudgetTrackerGUI extends JFrame {
         button.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
     }
 
+    // Getter for AnalyticsTab
+    public AnalyticsTab getAnalyticsTab() {
+        return analyticsTab;
+    }
+
+    // ✅ UPDATED MAIN METHOD (LOGIN FIRST)
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-            if (AccountManager.getUser() == null) {
-                RegisterDialog register = new RegisterDialog(null);
-                register.setVisible(true);
-            }
-
+            // Show Login Dialog first
             LoginDialog login = new LoginDialog(null);
             login.setVisible(true);
 
+            // Open app only if login succeeds
             if (login.isSuccess()) {
                 new BudgetTrackerGUI().setVisible(true);
             } else {

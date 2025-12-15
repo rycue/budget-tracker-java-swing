@@ -6,30 +6,33 @@ import java.util.ArrayList;
 
 public class GoalsTab extends JPanel {
 
-    private DefaultListModel<String> goalsListModel;
     private ArrayList<Goal> goals = new ArrayList<>();
+    private ArrayList<GoalPanel> goalPanels = new ArrayList<>();
 
-    public GoalsTab() {
+    private JPanel goalsContainer;
+    private DashboardTab dashboardTab;
+
+    public GoalsTab(DashboardTab dashboardTab) {
+        this.dashboardTab = dashboardTab;
+
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.BLACK);
         initUI();
     }
 
     private void initUI() {
-        // Title
-        JLabel title = new JLabel("Your Goals", SwingConstants.CENTER);
+        JLabel title = new JLabel("GOALS", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setForeground(Color.GREEN);
         add(title, BorderLayout.NORTH);
 
-        // List of goals
-        goalsListModel = new DefaultListModel<>();
-        JList<String> goalsList = new JList<>(goalsListModel);
-        goalsList.setBackground(Color.BLACK);
-        goalsList.setForeground(Color.GREEN);
-        goalsList.setSelectionBackground(new Color(0, 100, 0));
-        goalsList.setSelectionForeground(Color.WHITE);
-        add(new JScrollPane(goalsList), BorderLayout.CENTER);
+        goalsContainer = new JPanel();
+        goalsContainer.setLayout(new BoxLayout(goalsContainer, BoxLayout.Y_AXIS));
+        goalsContainer.setBackground(Color.BLACK);
+
+        JScrollPane scroll = new JScrollPane(goalsContainer);
+        scroll.setBorder(null);
+        add(scroll, BorderLayout.CENTER);
 
         JButton addGoalBtn = new JButton("Add Goal");
         styleButton(addGoalBtn);
@@ -43,13 +46,43 @@ public class GoalsTab extends JPanel {
     }
 
     private void openGoalDialog() {
+        if (goals.size() >= 10) {
+            JOptionPane.showMessageDialog(this, "You can only add up to 10 goals.");
+            return;
+        }
+
         GoalDialog dialog = new GoalDialog(SwingUtilities.getWindowAncestor(this));
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
             Goal goal = dialog.getGoal();
             goals.add(goal);
-            goalsListModel.addElement(goal.toString());
+
+            GoalPanel panel = new GoalPanel(goal);
+            panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+            panel.setRemoveAction(() -> removeGoal(goal, panel));
+
+            goalPanels.add(panel);
+            goalsContainer.add(panel);
+
+            goalsContainer.revalidate();
+            goalsContainer.repaint();
+        }
+    }
+
+    private void removeGoal(Goal goal, GoalPanel panel) {
+        goals.remove(goal);
+        goalPanels.remove(panel);
+        goalsContainer.remove(panel);
+
+        goalsContainer.revalidate();
+        goalsContainer.repaint();
+    }
+
+    public void applyTransactionToGoals(Transaction t) {
+        for (int i = 0; i < goals.size(); i++) {
+            goals.get(i).applyTransaction(t);
+            goalPanels.get(i).refresh();
         }
     }
 
@@ -58,5 +91,10 @@ public class GoalsTab extends JPanel {
         button.setForeground(Color.BLACK);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+    }
+
+    // Add this method
+    public int getGoalCount() {
+        return goals.size();
     }
 }

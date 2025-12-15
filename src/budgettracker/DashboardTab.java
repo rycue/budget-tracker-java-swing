@@ -1,102 +1,190 @@
 package budgettracker;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 public class DashboardTab extends JPanel {
 
     private JLabel balanceLabel;
-    private JLabel totalIncomeLabel;
-    private JLabel totalExpenseLabel;
-    private JPanel historyPanel;
-    private DefaultListModel<String> historyListModel;
-
-    private double totalIncome = 0;
-    private double totalExpense = 0;
-
-    private ArrayList<Transaction> transactions = new ArrayList<>();
+    private JLabel incomeLabel;
+    private JLabel expenseLabel;
+    private JTable transactionTable;
+    private DefaultTableModel tableModel;
+    private List<Transaction> transactions;
+    private AnalyticsTab analyticsTab;
 
     public DashboardTab() {
+        transactions = new ArrayList<>();
         setLayout(new BorderLayout(10, 10));
-        setBackground(Color.BLACK);  // Main background
-        initComponents();
-    }
+        setBackground(Color.BLACK);
 
-    private void initComponents() {
-        JPanel topPanel = new JPanel();
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        topPanel.setBackground(new Color(17,17,17)); // Dark panel background
+        // TOP PANEL
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.BLACK);
 
-        balanceLabel = new JLabel("Balance: ₱0.00", SwingConstants.CENTER);
-        balanceLabel.setFont(new Font("Arial", Font.BOLD, 28));
-        balanceLabel.setForeground(Color.GREEN); // Bright green text
-        balanceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        balanceLabel = createLabel("BALANCE: ₱0.00", 32);
+        balanceLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        topPanel.add(balanceLabel, BorderLayout.NORTH);
 
-        totalIncomeLabel = new JLabel("Total Income: ₱0.00", SwingConstants.CENTER);
-        totalIncomeLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-        totalIncomeLabel.setForeground(Color.GREEN);
-        totalIncomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JPanel iePanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        iePanel.setBackground(Color.BLACK);
 
-        totalExpenseLabel = new JLabel("Total Expense: ₱0.00", SwingConstants.CENTER);
-        totalExpenseLabel.setFont(new Font("Arial", Font.PLAIN, 18));
-        totalExpenseLabel.setForeground(Color.GREEN);
-        totalExpenseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        incomeLabel = createLabel("INCOME: ₱0.00", 24);
+        incomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        topPanel.add(balanceLabel);
-        topPanel.add(Box.createVerticalStrut(10));
-        topPanel.add(totalIncomeLabel);
-        topPanel.add(Box.createVerticalStrut(5));
-        topPanel.add(totalExpenseLabel);
+        expenseLabel = createLabel("EXPENSE: ₱0.00", 24);
+        expenseLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        iePanel.add(incomeLabel);
+        iePanel.add(expenseLabel);
+        topPanel.add(iePanel, BorderLayout.CENTER);
 
         add(topPanel, BorderLayout.NORTH);
 
-        historyListModel = new DefaultListModel<>();
-        JList<String> historyList = new JList<>(historyListModel);
-        historyList.setBackground(Color.BLACK);
-        historyList.setForeground(Color.GREEN);
-        historyList.setSelectionBackground(new Color(0, 100, 0));
-        historyList.setSelectionForeground(Color.WHITE);
+        // HISTORY PANEL WITH BORDER
+        JPanel historyPanel = new JPanel(new BorderLayout());
+        historyPanel.setBackground(Color.BLACK);
+        historyPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GREEN, 2),
+                "History",
+                TitledBorder.CENTER,
+                TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 16),
+                Color.GREEN
+        ));
 
-        historyPanel = new JPanel(new BorderLayout());
-        historyPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GREEN), "History", 0, 0, new Font("Arial", Font.BOLD, 16), Color.GREEN));
-        historyPanel.setBackground(new Color(17,17,17));
-        historyPanel.add(new JScrollPane(historyList), BorderLayout.CENTER);
+        // TABLE
+        String[] columns = {"Date", "Type", "Category", "Note", "Amount", "Remove"};
+        tableModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int column) {
+                return column == 5; // Only the button column editable
+            }
+        };
+
+        transactionTable = new JTable(tableModel);
+        transactionTable.setRowHeight(30);
+
+        // Button renderer/editor
+        transactionTable.getColumn("Remove").setCellRenderer(new ButtonRenderer());
+        transactionTable.getColumn("Remove").setCellEditor(new ButtonEditor());
+
+        historyPanel.add(new JScrollPane(transactionTable), BorderLayout.CENTER);
 
         add(historyPanel, BorderLayout.CENTER);
     }
 
-    // Called when main window adds a transaction
-    public void addTransactionFromOutside(Transaction t) {
-        transactions.add(t);
-        addToHistory(t);
-        updateTotals();
+    private JLabel createLabel(String text, int fontSize) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(Color.GREEN);
+        lbl.setFont(new Font("Arial", Font.BOLD, fontSize));
+        return lbl;
     }
 
-    private void addToHistory(Transaction t) {
-        historyListModel.addElement(t.toString());
+    public void addTransactionFromOutside(Transaction t) {
+        transactions.add(t);
+        refreshAll();
+    }
+
+    private void refreshAll() {
+        tableModel.setRowCount(0);
+
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        for (Transaction t : transactions) {
+            tableModel.addRow(new Object[]{
+                    t.getDate().format(df),
+                    t.getType(),
+                    t.getCategory(),
+                    t.getNote(),
+                    String.format("₱%.2f", t.getAmount()),
+                    "-" // BIG MINUS SIGN AS BUTTON
+            });
+        }
+
+        updateTotals();
+
+        if (analyticsTab != null) {
+            analyticsTab.updateTable();
+        }
     }
 
     private void updateTotals() {
-        totalIncome = transactions.stream()
-                .filter(tx -> tx.getType() == Transaction.Type.INCOME)
+        double income = transactions.stream()
+                .filter(t -> t.getType() == Transaction.Type.INCOME)
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
-        totalExpense = transactions.stream()
-                .filter(tx -> tx.getType() == Transaction.Type.EXPENSE)
+        double expense = transactions.stream()
+                .filter(t -> t.getType() == Transaction.Type.EXPENSE)
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
-        double balance = totalIncome - totalExpense;
+        double balance = income - expense;
 
-        balanceLabel.setText(String.format("Balance: ₱%.2f", balance));
-        totalIncomeLabel.setText(String.format("Total Income: ₱%.2f", totalIncome));
-        totalExpenseLabel.setText(String.format("Total Expense: ₱%.2f", totalExpense));
+        balanceLabel.setText(String.format("BALANCE: ₱%.2f", balance));
+        incomeLabel.setText(String.format("INCOME: ₱%.2f", income));
+        expenseLabel.setText(String.format("EXPENSE: ₱%.2f", expense));
     }
 
-    public ArrayList<Transaction> getTransactions() {
+    public List<Transaction> getTransactions() {
         return transactions;
+    }
+
+    public void setAnalyticsTab(AnalyticsTab analyticsTab) {
+        this.analyticsTab = analyticsTab;
+    }
+
+    // BUTTON RENDERER
+    private class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setText("-");
+            setFont(new Font("Arial", Font.BOLD, 20));
+            setBackground(Color.RED);
+            setForeground(Color.WHITE);
+        }
+
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int col) {
+            return this;
+        }
+    }
+
+    // BUTTON EDITOR (DELETE LOGIC)
+    private class ButtonEditor extends AbstractCellEditor implements TableCellEditor {
+
+        private JButton button;
+        private int row;
+
+        public ButtonEditor() {
+            button = new JButton("-");
+            button.setFont(new Font("Arial", Font.BOLD, 20));
+            button.setBackground(Color.RED);
+            button.setForeground(Color.WHITE);
+
+            button.addActionListener(e -> {
+                transactions.remove(row);
+                refreshAll();
+                fireEditingStopped();
+            });
+        }
+
+        public Component getTableCellEditorComponent(
+                JTable table, Object value, boolean isSelected,
+                int row, int col) {
+            this.row = row;
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            return "-";
+        }
     }
 }

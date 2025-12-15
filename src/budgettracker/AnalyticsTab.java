@@ -3,82 +3,108 @@ package budgettracker;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.LinkedHashMap;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AnalyticsTab extends JPanel {
-
     private DashboardTab dashboardTab;
-    private JTable statsTable;
+    private JTable analyticsTable;
     private DefaultTableModel tableModel;
-    private JComboBox<String> periodComboBox;
+    private JComboBox<String> monthFilter;
+    private JComboBox<String> yearFilter;
 
     public AnalyticsTab(DashboardTab dashboardTab) {
         this.dashboardTab = dashboardTab;
-
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.BLACK);
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.setBackground(Color.BLACK);
-        topPanel.add(new JLabel("Select Period: "){{
-            setForeground(Color.GREEN);
-        }});
-        periodComboBox = new JComboBox<>(new String[]{"Weekly", "Monthly", "Yearly"});
-        periodComboBox.setBackground(Color.GREEN);
-        periodComboBox.setForeground(Color.BLACK);
-        topPanel.add(periodComboBox);
-        add(topPanel, BorderLayout.NORTH);
+        // Filters panel
+        JPanel filterPanel = new JPanel();
+        filterPanel.setBackground(Color.BLACK);
 
-        String[] columns = {"When", "Balance", "Change", "Result (%)"};
-        tableModel = new DefaultTableModel(columns, 0);
-        statsTable = new JTable(tableModel);
-        statsTable.setBackground(Color.BLACK);
-        statsTable.setForeground(Color.GREEN);
-        statsTable.setGridColor(Color.GREEN);
-        statsTable.getTableHeader().setBackground(Color.BLACK);
-        statsTable.getTableHeader().setForeground(Color.GREEN);
-        add(new JScrollPane(statsTable), BorderLayout.CENTER);
+        monthFilter = new JComboBox<>();
+        monthFilter.addItem("All Months");
+        for (Month m : Month.values()) monthFilter.addItem(m.toString());
 
-        periodComboBox.addActionListener(e -> updateStats());
-        updateStats();
+        yearFilter = new JComboBox<>();
+        yearFilter.addItem("All Years");
+        int currentYear = LocalDate.now().getYear();
+        for (int y = currentYear - 5; y <= currentYear + 1; y++) yearFilter.addItem(String.valueOf(y));
+
+        filterPanel.add(new JLabel("Month:") {{ setForeground(Color.GREEN); }});
+        filterPanel.add(monthFilter);
+        filterPanel.add(new JLabel("Year:") {{ setForeground(Color.GREEN); }});
+        filterPanel.add(yearFilter);
+
+        add(filterPanel, BorderLayout.NORTH);
+
+        // Table setup - NEW COLUMNS
+        String[] columns = {"Date", "Category", "Amount", "Balance", "Result"};
+        tableModel = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+
+        analyticsTable = new JTable(tableModel);
+        analyticsTable.setFillsViewportHeight(true);
+        JScrollPane scrollPane = new JScrollPane(analyticsTable);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Update table when filters change
+        monthFilter.addActionListener(e -> updateTable());
+        yearFilter.addActionListener(e -> updateTable());
+
+        updateTable();
     }
 
-    private void updateStats() {
-        tableModel.setRowCount(0);
-        if (dashboardTab == null) return;
+    public void updateTable() {
+        tableModel.setRowCount(0); // Clear previous data
 
-        List<Transaction> transactions = dashboardTab.getTransactions();
-        Map<String, Double> periodBalances = new LinkedHashMap<>();
+        List<Transaction> all = dashboardTab.getTransactions();
 
-        double total = 0;
-        int index = 1;
-        String period = (String) periodComboBox.getSelectedItem();
+        // Apply filters
+        String monthSelected = (String) monthFilter.getSelectedItem();
+        String yearSelected = (String) yearFilter.getSelectedItem();
 
-        for (Transaction t : transactions) {
-            total += t.getType() == Transaction.Type.INCOME ? t.getAmount() : -t.getAmount();
-            String key = switch (period) {
-                case "Weekly" -> "Week " + index;
-                case "Monthly" -> "Month " + index;
-                default -> "Year " + index;
-            };
-            periodBalances.put(key, total);
-            index++;
-        }
+        List<Transaction> filtered = all.stream().filter(t -> {
+            boolean monthMatch = monthSelected.equals("All Months") || 
+                                 t.getDate().getMonth().toString().equals(monthSelected);
+            boolean yearMatch = yearSelected.equals("All Years") || 
+                                String.valueOf(t.getDate().getYear()).equals(yearSelected);
+            return monthMatch && yearMatch;
+        }).collect(Collectors.toList());
 
-        double prev = 0;
-        for (Map.Entry<String, Double> entry : periodBalances.entrySet()) {
-            double balance = entry.getValue();
-            double change = balance - prev;
-            double result = prev != 0 ? (change / prev) * 100 : 0;
+        // Sort by date (oldest first)
+        filtered.sort((t1, t2) -> t1.getDate().compareTo(t2.getDate()));
+
+        // Display each transaction individually with running balance
+        double runningBalance = 0.0;
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        for (Transaction t : filtered) {
+            double amount = t.getAmount();
+            String amountStr;
+            String result;
+
+            if (t.getType() == Transaction.Type.INCOME) {
+                runningBalance += amount;
+                amountStr = String.format("+₱%.2f", amount);
+                result = "Income";
+            } else {
+                runningBalance -= amount;
+                amountStr = String.format("-₱%.2f", amount);
+                result = "Expense";
+            }
+
             tableModel.addRow(new Object[]{
-                    entry.getKey(),
-                    String.format("₱%.2f", balance),
-                    String.format("%+.2f", change),
-                    String.format("%+.2f%%", result)
+                    t.getDate().format(df),
+                    t.getCategory(),
+                    amountStr,
+                    String.format("₱%.2f", runningBalance),
+                    result
             });
-            prev = balance;
         }
     }
 }
