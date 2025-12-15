@@ -3,7 +3,8 @@ package budgettracker;
 import java.time.LocalDate;
 
 public class UserAccount {
-    private String name;
+    private String firstName;
+    private String lastName;
     private String mobile;
     private String email;
     private String username;
@@ -13,11 +14,12 @@ public class UserAccount {
     private String securityQuestion;
     private String securityAnswer; 
 
-    public UserAccount(String name, String mobile,
+    public UserAccount(String firstName, String lastName, String mobile,
                        String email, String username, String password,
                        String securityQuestion, String securityAnswer) {
 
-        this.name = name;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.mobile = mobile;
         this.email = email;
         this.username = username;
@@ -28,7 +30,7 @@ public class UserAccount {
         this.securityAnswer = securityAnswer;
     }
 
-    public String getFullName() { return name; }
+    public String getFullName() { return firstName + " " + lastName; }
     public String getMobile() { return mobile; }
     public String getEmail() { return email; }
     public String getUsername() { return username; }

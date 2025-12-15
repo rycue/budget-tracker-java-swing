@@ -5,7 +5,7 @@ import java.awt.*;
 
 public class RegisterDialog extends JDialog {
 
-    private JTextField nameField, mobileField, emailField, userField;
+    private JTextField firstField, lastField, mobileField, emailField, userField;
     private JPasswordField passField;
 
     //NEW FIELDS
@@ -20,7 +20,9 @@ public class RegisterDialog extends JDialog {
         JPanel form = new JPanel();
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
 
-        form.add(makeField("Name: ", nameField = new JTextField(15)));
+        form.add(makeField("First Name: ", firstField = new JTextField(15)));
+        form.add(makeField("Last Name: ", lastField = new JTextField(15)));
+        form.add(makeField("Mobile: ", mobileField = new JTextField(15)));
         form.add(makeField("Email: ", emailField = new JTextField(15)));
         form.add(makeField("Username: ", userField = new JTextField(15)));
         form.add(makeField("Password: ", passField = new JPasswordField(15)));
@@ -34,7 +36,8 @@ public class RegisterDialog extends JDialog {
         registerBtn.addActionListener(e -> {
 
             // Basic validation
-            if (nameField.getText().isBlank() ||
+            if (firstField.getText().isBlank() ||
+                lastField.getText().isBlank() ||
                 mobileField.getText().isBlank() ||
                 emailField.getText().isBlank() ||
                 userField.getText().isBlank() ||
@@ -48,7 +51,8 @@ public class RegisterDialog extends JDialog {
 
             // Create the user with security question & answer
             UserAccount user = new UserAccount(
-                    nameField.getText(),
+                    firstField.getText(),
+                    lastField.getText(),
                     mobileField.getText(),
                     emailField.getText(),
                     userField.getText(),
