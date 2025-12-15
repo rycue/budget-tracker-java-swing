@@ -2,6 +2,7 @@ package budgettracker;
 
 import javax.swing.*;
 import java.awt.*;
+import com.formdev.flatlaf.FlatDarculaLaf;
 
 public class BudgetTrackerGUI extends JFrame {
 
@@ -68,6 +69,8 @@ public class BudgetTrackerGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            
+            FlatDarculaLaf.setup();
 
             if (AccountManager.getUser() == null) {
                 RegisterDialog register = new RegisterDialog(null);
