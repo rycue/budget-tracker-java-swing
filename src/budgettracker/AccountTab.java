@@ -128,7 +128,7 @@ public class AccountTab extends JPanel {
                 login.setVisible(true);
                 
                 if (login.isSuccess()) {
-                    new BudgetTrackerGUI().setVisible(true);
+                    new BudgetTracker().setVisible(true);
                 } else {
                     System.exit(0);
                 }

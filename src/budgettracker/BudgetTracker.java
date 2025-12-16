@@ -3,13 +3,13 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 
-public class BudgetTrackerGUI extends JFrame {
+public class BudgetTracker extends JFrame {
     private DashboardTab dashboardTab;
     private GoalsTab goalsTab;
     private AnalyticsTab analyticsTab;
     private AccountTab accountTab;
 
-    public BudgetTrackerGUI() {
+    public BudgetTracker() {
         setTitle("Budget Tracker");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -140,7 +140,7 @@ public class BudgetTrackerGUI extends JFrame {
             LoginDialog login = new LoginDialog(null);
             login.setVisible(true);
             if (login.isSuccess()) {
-                new BudgetTrackerGUI().setVisible(true);
+                new BudgetTracker().setVisible(true);
             } else {
                 System.exit(0);
             }
