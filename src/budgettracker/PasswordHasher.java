@@ -31,6 +31,7 @@ public class PasswordHasher {
         return BCrypt.checkpw(plainTextPassword, storedHash);
     }
 
+    
     /**
      * Checks if a plain-text password matches a hashed password stored in the
      * database.
