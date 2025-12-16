@@ -16,7 +16,7 @@ public class Transaction {
         this.category = category;
         this.note = note;
         this.amount = amount;
-        this.date = LocalDate.now(); // transaction date is set automatically
+        this.date = LocalDate.now(); 
     }
 
     public Type getType() { return type; }
