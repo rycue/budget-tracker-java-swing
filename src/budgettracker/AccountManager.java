@@ -7,9 +7,9 @@ public class AccountManager {
         loggedInUser = user;
     }
     
-    public static boolean login(String username, String password) {
+    public static boolean loginWithEmail(String email, String password) {
         return loggedInUser != null &&
-               loggedInUser.getUsername().equals(username) &&
+               loggedInUser.getEmail().equals(email) &&
                loggedInUser.getPassword().equals(password);
     }
     

@@ -19,6 +19,7 @@ public class DashboardTab extends JPanel {
     private DefaultTableModel tableModel;
     private List<Transaction> transactions;
     private AnalyticsTab analyticsTab;
+    private GoalsTab goalsTab;
 
     public DashboardTab() {
         transactions = new ArrayList<>();
@@ -87,9 +88,17 @@ public class DashboardTab extends JPanel {
         return lbl;
     }
 
+    public void setGoalsTab(GoalsTab goalsTab) {
+        this.goalsTab = goalsTab;
+    }
+
     public void addTransactionFromOutside(Transaction t) {
         transactions.add(t);
         refreshAll();
+   
+        if (goalsTab != null) {
+            goalsTab.applyTransactionToGoals(t);
+        }
     }
 
     private void refreshAll() {
@@ -141,7 +150,6 @@ public class DashboardTab extends JPanel {
         this.analyticsTab = analyticsTab;
     }
 
-    // BUTTON RENDERER
     private class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer() {
             setText("-");
@@ -157,7 +165,6 @@ public class DashboardTab extends JPanel {
         }
     }
 
-    // BUTTON EDITOR (DELETE LOGIC)
     private class ButtonEditor extends AbstractCellEditor implements TableCellEditor {
 
         private JButton button;
@@ -172,6 +179,11 @@ public class DashboardTab extends JPanel {
             button.addActionListener(e -> {
                 transactions.remove(row);
                 refreshAll();
+                
+                if (goalsTab != null) {
+                    goalsTab.recalculateAllGoals();
+                }
+                
                 fireEditingStopped();
             });
         }

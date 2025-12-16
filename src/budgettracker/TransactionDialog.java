@@ -27,8 +27,10 @@ public class TransactionDialog extends JDialog {
         typePanel.setBackground(Color.decode("#121212"));
         incomeBtn = new JRadioButton("Income");
         expenseBtn = new JRadioButton("Expense");
-        incomeBtn.setForeground(Color.BLACK);
-        expenseBtn.setForeground(Color.BLACK);
+        incomeBtn.setForeground(Color.GREEN);
+        expenseBtn.setForeground(Color.GREEN);
+        incomeBtn.setBackground(Color.decode("#121212"));
+        expenseBtn.setBackground(Color.decode("#121212"));
         ButtonGroup group = new ButtonGroup();
         group.add(incomeBtn);
         group.add(expenseBtn);
@@ -47,14 +49,12 @@ public class TransactionDialog extends JDialog {
         incomeBtn.addActionListener(e -> categoryBox.setModel(new DefaultComboBoxModel<>(incomeCategories)));
         expenseBtn.addActionListener(e -> categoryBox.setModel(new DefaultComboBoxModel<>(expenseCategories)));
 
-        //NOTE
         JPanel notePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         notePanel.setBackground(Color.decode("#121212"));
         notePanel.add(new JLabel("Note: ") {{ setForeground(Color.GREEN); }});
         noteField = new JTextField(20);
         notePanel.add(noteField);
 
-        //AMOUNT
         JPanel amountPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         amountPanel.setBackground(Color.decode("#121212"));
         amountPanel.add(new JLabel("Amount: ") {{ setForeground(Color.GREEN); }});
@@ -73,14 +73,38 @@ public class TransactionDialog extends JDialog {
 
         saveBtn.addActionListener(e -> {
             if (amountField.getText().isBlank()) {
-                JOptionPane.showMessageDialog(this, "Amount is required.", "Error", JOptionPane.ERROR_MESSAGE);
+                showError("Amount is required.");
                 return;
             }
-            try { Double.parseDouble(amountField.getText()); }
-            catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Amount must be a number.", "Error", JOptionPane.ERROR_MESSAGE);
+            
+            double amount;
+            try {
+                amount = Double.parseDouble(amountField.getText().trim());
+            } catch (NumberFormatException ex) {
+                showError("Amount must be a valid number.\nExample: 100 or 100.50");
                 return;
             }
+            
+            // Validate amount is positive
+            if (amount <= 0) {
+                showError("Amount must be greater than zero.");
+                return;
+            }
+            
+            if (amount > 1000000000) { // 1 billion limit
+                showError("Amount is too large. Please enter a reasonable amount.");
+                return;
+            }
+            
+            String amountStr = amountField.getText().trim();
+            if (amountStr.contains(".")) {
+                String[] parts = amountStr.split("\\.");
+                if (parts.length > 1 && parts[1].length() > 2) {
+                    showError("Amount can have at most 2 decimal places.\nExample: 100.50");
+                    return;
+                }
+            }
+            
             saved = true;
             dispose();
         });
@@ -96,6 +120,10 @@ public class TransactionDialog extends JDialog {
         add(formPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
     }
+    
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Validation Error", JOptionPane.ERROR_MESSAGE);
+    }
 
     public boolean isSaved() { return saved; }
 
@@ -103,8 +131,8 @@ public class TransactionDialog extends JDialog {
         String selected = incomeBtn.isSelected() ? "Income" : "Expense";
         Transaction.Type type = selected.equals("Income") ? Transaction.Type.INCOME : Transaction.Type.EXPENSE;
         String category = (String) categoryBox.getSelectedItem();
-        String note = noteField.getText();
-        double amount = Double.parseDouble(amountField.getText());
+        String note = noteField.getText().trim();
+        double amount = Double.parseDouble(amountField.getText().trim());
         return new Transaction(type, category, note, amount);
     }
 }

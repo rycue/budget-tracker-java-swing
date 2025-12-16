@@ -1,5 +1,4 @@
 package budgettracker;
-
 import java.time.LocalDate;
 
 public class Goal {
@@ -8,7 +7,6 @@ public class Goal {
     private double progress;
     private LocalDate dateCreated;
 
-    // Constructor
     public Goal(String name, double target) {
         this.name = name;
         this.target = target;
@@ -21,9 +19,8 @@ public class Goal {
     public double getProgress() { return progress; }
     public LocalDate getDateCreated() { return dateCreated; }
 
-    // Increase progress when a transaction applies to this goal
     public void applyTransaction(Transaction t) {
-        if (t.getType() == Transaction.Type.EXPENSE) {
+        if (t.getType() == Transaction.Type.INCOME || t.getType() == Transaction.Type.EXPENSE) {
             progress += t.getAmount();
             if (progress > target) progress = target;
         }

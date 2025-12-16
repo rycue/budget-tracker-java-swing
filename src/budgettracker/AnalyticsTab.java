@@ -41,7 +41,6 @@ public class AnalyticsTab extends JPanel {
 
         add(filterPanel, BorderLayout.NORTH);
 
-        // Table setup - NEW COLUMNS
         String[] columns = {"Date", "Category", "Amount", "Balance", "Result"};
         tableModel = new DefaultTableModel(columns, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
@@ -60,11 +59,10 @@ public class AnalyticsTab extends JPanel {
     }
 
     public void updateTable() {
-        tableModel.setRowCount(0); // Clear previous data
+        tableModel.setRowCount(0); 
 
         List<Transaction> all = dashboardTab.getTransactions();
 
-        // Apply filters
         String monthSelected = (String) monthFilter.getSelectedItem();
         String yearSelected = (String) yearFilter.getSelectedItem();
 
@@ -76,10 +74,9 @@ public class AnalyticsTab extends JPanel {
             return monthMatch && yearMatch;
         }).collect(Collectors.toList());
 
-        // Sort by date (oldest first)
+        // Sort by date
         filtered.sort((t1, t2) -> t1.getDate().compareTo(t2.getDate()));
 
-        // Display each transaction individually with running balance
         double runningBalance = 0.0;
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 

@@ -5,16 +5,13 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class GoalsTab extends JPanel {
-
     private ArrayList<Goal> goals = new ArrayList<>();
     private ArrayList<GoalPanel> goalPanels = new ArrayList<>();
-
     private JPanel goalsContainer;
     private DashboardTab dashboardTab;
 
     public GoalsTab(DashboardTab dashboardTab) {
         this.dashboardTab = dashboardTab;
-
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.BLACK);
         initUI();
@@ -35,8 +32,10 @@ public class GoalsTab extends JPanel {
         add(scroll, BorderLayout.CENTER);
 
         JButton addGoalBtn = new JButton("Add Goal");
+        addGoalBtn.setFont(new Font("Arial", Font.BOLD, 24));
+        addGoalBtn.setPreferredSize(new Dimension(150, 50));
         styleButton(addGoalBtn);
-
+        
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.setBackground(Color.BLACK);
         btnPanel.add(addGoalBtn);
@@ -50,23 +49,29 @@ public class GoalsTab extends JPanel {
             JOptionPane.showMessageDialog(this, "You can only add up to 10 goals.");
             return;
         }
-
+        
         GoalDialog dialog = new GoalDialog(SwingUtilities.getWindowAncestor(this));
         dialog.setVisible(true);
-
+        
         if (dialog.isSaved()) {
             Goal goal = dialog.getGoal();
             goals.add(goal);
-
+            
+            applyExistingTransactionsToGoal(goal);
+            
             GoalPanel panel = new GoalPanel(goal);
             panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
             panel.setRemoveAction(() -> removeGoal(goal, panel));
-
             goalPanels.add(panel);
             goalsContainer.add(panel);
-
             goalsContainer.revalidate();
             goalsContainer.repaint();
+        }
+    }
+    
+    private void applyExistingTransactionsToGoal(Goal goal) {
+        for (Transaction t : dashboardTab.getTransactions()) {
+            goal.applyTransaction(t);
         }
     }
 
@@ -74,7 +79,6 @@ public class GoalsTab extends JPanel {
         goals.remove(goal);
         goalPanels.remove(panel);
         goalsContainer.remove(panel);
-
         goalsContainer.revalidate();
         goalsContainer.repaint();
     }
@@ -93,8 +97,23 @@ public class GoalsTab extends JPanel {
         button.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
     }
 
-    // Add this method
     public int getGoalCount() {
         return goals.size();
     }
+
+public void recalculateAllGoals() {
+    for (Goal goal : goals) {
+        goal.reset();
+    }
+    
+    for (Transaction t : dashboardTab.getTransactions()) {
+        for (Goal goal : goals) {
+            goal.applyTransaction(t);
+        }
+    }
+    
+    for (GoalPanel panel : goalPanels) {
+        panel.refresh();
+    }
+}
 }

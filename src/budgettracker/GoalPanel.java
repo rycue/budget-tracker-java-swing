@@ -1,10 +1,8 @@
 package budgettracker;
-
 import javax.swing.*;
 import java.awt.*;
 
 public class GoalPanel extends JPanel {
-
     private Goal goal;
     private JLabel titleLabel;
     private JLabel messageLabel;
@@ -14,7 +12,6 @@ public class GoalPanel extends JPanel {
 
     public GoalPanel(Goal goal) {
         this.goal = goal;
-
         setLayout(new BorderLayout(5, 5)); // smaller spacing
         setBackground(Color.DARK_GRAY);
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -35,6 +32,14 @@ public class GoalPanel extends JPanel {
         progressBar.setStringPainted(true);
         progressBar.setPreferredSize(new Dimension(300, 100));
         progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        
+        progressBar.setForeground(Color.decode("#00FF00")); // Bright green
+        progressBar.setBackground(Color.decode("#2a2a2a")); // Dark background
+        
+        progressBar.setFont(new Font("Arial", Font.BOLD, 16));
+        UIManager.put("ProgressBar.foreground", Color.BLACK);
+        UIManager.put("ProgressBar.selectionForeground", Color.BLACK);
+        UIManager.put("ProgressBar.selectionBackground", Color.BLACK);
 
         // Remove button
         removeBtn = new JButton("Remove");
@@ -45,21 +50,17 @@ public class GoalPanel extends JPanel {
             if (removeAction != null) removeAction.run();
         });
 
-        // Top panel for title + remove button
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(Color.DARK_GRAY);
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(removeBtn, BorderLayout.EAST);
 
-        // Center panel for message + progress
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBackground(Color.DARK_GRAY);
-
         messageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Add components without extra spacing
         centerPanel.add(messageLabel);
         centerPanel.add(progressBar);
 
