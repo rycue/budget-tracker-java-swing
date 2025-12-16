@@ -3,7 +3,7 @@ package budgettracker;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class PasswordHasher {
-    
+
     private static final int WORK_FACTOR = 12;
 
     /**
@@ -30,6 +30,7 @@ public class PasswordHasher {
         // Performs the comparison securely
         return BCrypt.checkpw(plainTextPassword, storedHash);
     }
+
     
     /**
      * Checks if a plain-text password matches a hashed password stored in the
