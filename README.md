@@ -1,3 +1,14 @@
+0. Copy the SQL code below.
+
+1. Open Database: Click `jtvi_budget_tracker_db` in the left sidebar.
+   - **Note:** If the database does not exist yet, click ***"New"*** at the top of the sidebar, type the name `jtvi_budget_tracker_db`, and click "Create."
+
+3. Open SQL Tab: Click the ***SQL tab*** in the top navigation menu.
+
+4. Paste & Go: Paste your code into the box and click the ***Go button*** (bottom right).
+
+5. Verify: Ensure the 4 tables appear on the left.
+
 ```sql
 -- 1. Create the Database
 CREATE DATABASE IF NOT EXISTS jtvi_budget_tracker_db;
