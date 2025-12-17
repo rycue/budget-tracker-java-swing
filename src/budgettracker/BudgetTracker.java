@@ -8,6 +8,10 @@ public class BudgetTracker extends JFrame {
     private GoalsTab goalsTab;
     private AnalyticsTab analyticsTab;
     private AccountTab accountTab;
+    
+    public DashboardTab getDashboardTab() {
+        return this.dashboardTab;
+    }
 
     public BudgetTracker() {
         setTitle("Budget Tracker");
@@ -90,9 +94,22 @@ public class BudgetTracker extends JFrame {
     private void openTransactionDialog() {
         TransactionDialog dialog = new TransactionDialog(this);
         dialog.setVisible(true);
+
         if (dialog.isSaved()) {
-            Transaction t = dialog.getTransaction();
-            dashboardTab.addTransactionFromOutside(t);
+            Transaction transaction = dialog.getTransaction();
+            String userIdStr = AccountManager.getUserId();
+            
+            if (userIdStr != null) {
+                int userId = Integer.parseInt(userIdStr);
+
+                boolean success = DataHandler.saveToDatabase(transaction, userId);
+
+                if (success) {
+                    dashboardTab.addTransactionFromOutside(transaction);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to save to database!");
+                }
+            }
         }
     }
     
@@ -136,14 +153,21 @@ public class BudgetTracker extends JFrame {
     }
     
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
+        while (true) {
             LoginDialog login = new LoginDialog(null);
             login.setVisible(true);
+
             if (login.isSuccess()) {
-                new BudgetTracker().setVisible(true);
+                BudgetTracker mainApp = new BudgetTracker();
+
+                mainApp.dashboardTab.loadFromDatabase();
+
+                mainApp.setVisible(true);
+
+                break;
             } else {
                 System.exit(0);
             }
-        });
+        }
     }
 }

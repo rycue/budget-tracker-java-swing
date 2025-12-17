@@ -27,11 +27,16 @@ public class AccountManager {
         );
         
         if (registrationSuccess) {
-            loggedInUser = user;
-            return true;
-        }
-        else {
-            return false;
+            String realID = DataHandler.verifyUserLogin(email, plainTextPassword);
+
+            if (realID != null) {
+                loggedInUser = DataHandler.loadUserAccount(realID);
+                return true; // Path 1: Everything worked
+            }
+            // If we are here, registration worked but login fetch failed.
+            return false; // Path 2: Fail because we couldn't get the ID
+        } else {
+            return false; // Path 3: Registration failed
         }
     }
     
@@ -69,5 +74,10 @@ public class AccountManager {
         } else {
             System.out.println("LOG: Logout called, but no user was logged in.");
         }
+    }
+    
+    public static String getUserId() {
+        // Check if loggedInUser is not null, then get its ID
+        return (loggedInUser != null) ? String.valueOf(loggedInUser.getUserID()) : null;
     }
 }

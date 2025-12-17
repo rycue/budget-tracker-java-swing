@@ -16,12 +16,12 @@ public class DashboardTab extends JPanel {
     private JLabel incomeLabel;
     private JLabel expenseLabel;
     private JTable transactionTable;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel tableModel;   
     private List<Transaction> transactions;
     private AnalyticsTab analyticsTab;
     private GoalsTab goalsTab;
 
-    public DashboardTab() {
+    public DashboardTab() {  
         transactions = new ArrayList<>();
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.BLACK);
@@ -79,6 +79,7 @@ public class DashboardTab extends JPanel {
         historyPanel.add(new JScrollPane(transactionTable), BorderLayout.CENTER);
 
         add(historyPanel, BorderLayout.CENTER);
+        
     }
 
     private JLabel createLabel(String text, int fontSize) {
@@ -197,6 +198,20 @@ public class DashboardTab extends JPanel {
 
         public Object getCellEditorValue() {
             return "-";
+        }
+    }
+    
+    public void loadFromDatabase() {
+        String userIdStr = AccountManager.getUserId();
+
+        if (userIdStr != null) {
+            try {
+                int userId = Integer.parseInt(userIdStr);
+                this.transactions = DataHandler.loadTransactions(userId);
+                refreshAll();
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid User ID format");
+            }
         }
     }
 }

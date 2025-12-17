@@ -12,7 +12,7 @@ public class TransactionDialog extends JDialog {
 
     private boolean saved = false;
 
-    private final String[] incomeCategories = {"Salary", "Bonus", "Investment", "Gift", "Other"};
+    private final String[] incomeCategories = {"Allowance", "Salary", "Bonus", "Investment", "Gift", "Other"};
     private final String[] expenseCategories = {"Food", "Transport", "Bills", "Shopping", "Entertainment", "Other"};
 
     public TransactionDialog(JFrame parent) {
@@ -135,4 +135,5 @@ public class TransactionDialog extends JDialog {
         double amount = Double.parseDouble(amountField.getText().trim());
         return new Transaction(type, category, note, amount);
     }
+    
 }
