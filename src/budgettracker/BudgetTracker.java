@@ -152,22 +152,47 @@ public class BudgetTracker extends JFrame {
         return analyticsTab;
     }
     
-    public static void main(String[] args) {
-        while (true) {
-            LoginDialog login = new LoginDialog(null);
-            login.setVisible(true);
+    public static void showLogin() {
+        LoginDialog login = new LoginDialog(null);
+        login.setVisible(true);
 
-            if (login.isSuccess()) {
-                BudgetTracker mainApp = new BudgetTracker();
+        if (login.isSuccess()) {
+            BudgetTracker mainApp = new BudgetTracker();
 
-                mainApp.dashboardTab.loadFromDatabase();
-
-                mainApp.setVisible(true);
-
-                break;
-            } else {
-                System.exit(0);
+            // Load data immediately after login
+            mainApp.dashboardTab.loadFromDatabase();
+            String uid = AccountManager.getUserId();
+            if (uid != null) {
+                mainApp.goalsTab.loadExistingGoals(Integer.parseInt(uid));
             }
+
+            mainApp.setVisible(true);
+        } else {
+            System.exit(0);
         }
+    }
+    
+    public void refreshAllTabs() {
+        // 1. Reload transactions into the Dashboard
+        if (dashboardTab != null) {
+            dashboardTab.loadFromDatabase();
+        }
+
+        // 2. Reload goals
+        String uid = AccountManager.getUserId();
+        if (uid != null && goalsTab != null) {
+            goalsTab.loadExistingGoals(Integer.parseInt(uid));
+        }
+
+        // 3. Refresh the Account UI labels
+        if (accountTab != null) {
+            accountTab.refresh();
+        }
+
+        System.out.println("LOG: Global refresh complete. UI is now synced with Database.");
+    }
+    
+    public static void main(String[] args) {
+        showLogin();
     }
 }

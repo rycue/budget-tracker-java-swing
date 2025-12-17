@@ -94,9 +94,8 @@ public class DashboardTab extends JPanel {
     }
 
     public void addTransactionFromOutside(Transaction t) {
-        transactions.add(t);
-        refreshAll();
-   
+        loadFromDatabase();
+
         if (goalsTab != null) {
             goalsTab.applyTransactionToGoals(t);
         }
@@ -178,13 +177,27 @@ public class DashboardTab extends JPanel {
             button.setForeground(Color.WHITE);
 
             button.addActionListener(e -> {
-                transactions.remove(row);
-                refreshAll();
-                
-                if (goalsTab != null) {
-                    goalsTab.recalculateAllGoals();
+                // 1. Get the transaction object from the list using the row index
+                Transaction t = transactions.get(row);
+
+                // 2. Call the DataHandler to delete it from MySQL
+                // (Ensure you added the deleteTransaction method to DataHandler first!)
+                boolean deletedFromDb = DataHandler.deleteTransaction(t.getTransactionId());
+
+                if (deletedFromDb) {
+                    // 3. Only remove from the UI list if the DB delete was successful
+                    transactions.remove(row);
+                    refreshAll();
+
+                    if (goalsTab != null) {
+                        goalsTab.recalculateAllGoals();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this.button,
+                            "Error: Could not delete from database. Check if Transaction ID is valid.",
+                            "Delete Error", JOptionPane.ERROR_MESSAGE);
                 }
-                
+
                 fireEditingStopped();
             });
         }

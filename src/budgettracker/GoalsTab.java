@@ -5,6 +5,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class GoalsTab extends JPanel {
+
     private ArrayList<Goal> goals = new ArrayList<>();
     private ArrayList<GoalPanel> goalPanels = new ArrayList<>();
     private JPanel goalsContainer;
@@ -35,7 +36,7 @@ public class GoalsTab extends JPanel {
         addGoalBtn.setFont(new Font("Arial", Font.BOLD, 24));
         addGoalBtn.setPreferredSize(new Dimension(150, 50));
         styleButton(addGoalBtn);
-        
+
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.setBackground(Color.BLACK);
         btnPanel.add(addGoalBtn);
@@ -49,45 +50,78 @@ public class GoalsTab extends JPanel {
             JOptionPane.showMessageDialog(this, "You can only add up to 10 goals.");
             return;
         }
-        
+
         GoalDialog dialog = new GoalDialog(SwingUtilities.getWindowAncestor(this));
         dialog.setVisible(true);
-        
+
         if (dialog.isSaved()) {
             Goal goal = dialog.getGoal();
-            goals.add(goal);
-            
-            applyExistingTransactionsToGoal(goal);
-            
-            GoalPanel panel = new GoalPanel(goal);
-            panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-            panel.setRemoveAction(() -> removeGoal(goal, panel));
-            goalPanels.add(panel);
-            goalsContainer.add(panel);
-            goalsContainer.revalidate();
-            goalsContainer.repaint();
-        }
-    }
-    
-    private void applyExistingTransactionsToGoal(Goal goal) {
-        for (Transaction t : dashboardTab.getTransactions()) {
-            goal.applyTransaction(t);
+            UserAccount user = AccountManager.getUser(); // Get current logged-in user
+
+            // SAVE TO DATABASE
+            int newId = DataHandler.saveGoal(goal, user.getUserID());
+
+            if (newId != -1) {
+                goal.setGoalID(newId); // Set the ID returned from databse
+                goals.add(goal);
+
+                GoalPanel panel = new GoalPanel(goal);
+                panel.refresh(); // Ensure ₱ amounts show immediately
+                panel.setRemoveAction(() -> removeGoal(goal, panel));
+
+                goalsContainer.add(panel);
+                goalsContainer.revalidate();
+                goalsContainer.repaint();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to save goal to database.");
+            }
         }
     }
 
     private void removeGoal(Goal goal, GoalPanel panel) {
-        goals.remove(goal);
-        goalPanels.remove(panel);
-        goalsContainer.remove(panel);
+        // 1. Remove from Database
+        boolean success = DataHandler.deleteGoal(goal.getGoalID());
+
+        if (success) {
+            // 2. If DB delete worked, remove from UI
+            goals.remove(goal);
+            goalPanels.remove(panel);
+            goalsContainer.remove(panel);
+
+            // Refresh the UI container
+            goalsContainer.revalidate();
+            goalsContainer.repaint();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error: Could not delete goal from database.");
+        }
+    }
+    
+    public void loadExistingGoals(int userId) {
+        goals.clear();
+        goalPanels.clear();
+        goalsContainer.removeAll();
+
+        // Fetch from Database
+        ArrayList<Goal> loadedGoals = DataHandler.loadGoals(userId);
+
+        // Rebuild the UI panels
+        for (Goal g : loadedGoals) {
+            goals.add(g);
+            GoalPanel panel = new GoalPanel(g);
+
+            // This is crucial: link the remove logic
+            panel.setRemoveAction(() -> removeGoal(g, panel));
+
+            goalPanels.add(panel);
+            goalsContainer.add(panel);
+        }
+
+        // Refresh UI
         goalsContainer.revalidate();
         goalsContainer.repaint();
     }
 
     public void applyTransactionToGoals(Transaction t) {
-        for (int i = 0; i < goals.size(); i++) {
-            goals.get(i).applyTransaction(t);
-            goalPanels.get(i).refresh();
-        }
     }
 
     private void styleButton(JButton button) {
@@ -101,19 +135,6 @@ public class GoalsTab extends JPanel {
         return goals.size();
     }
 
-public void recalculateAllGoals() {
-    for (Goal goal : goals) {
-        goal.reset();
+    public void recalculateAllGoals() {
     }
-    
-    for (Transaction t : dashboardTab.getTransactions()) {
-        for (Goal goal : goals) {
-            goal.applyTransaction(t);
-        }
-    }
-    
-    for (GoalPanel panel : goalPanels) {
-        panel.refresh();
-    }
-}
 }

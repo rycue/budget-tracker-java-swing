@@ -40,4 +40,5 @@ public class Transaction {
     public String getNote() { return note; }
     public double getAmount() { return amount; }
     public LocalDate getDate() { return date; }
+    public int getTransactionId() { return transactionId; }
 }
