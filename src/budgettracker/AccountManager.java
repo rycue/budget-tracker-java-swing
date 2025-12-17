@@ -85,4 +85,17 @@ public class AccountManager {
         // Check if loggedInUser is not null, then get its ID
         return (loggedInUser != null) ? String.valueOf(loggedInUser.getUserID()) : null;
     }
+    
+    // FOR ACCOUNT SETTINGS
+    public static void updateLocalUser(String newName) {
+        if (loggedInUser != null) {
+            loggedInUser.setFullName(newName);
+        }
+    }
+
+    public static void updateLocalPassword(String newPass) {
+        if (loggedInUser != null) {
+            loggedInUser.setPassword(newPass);
+        }
+    }
 }

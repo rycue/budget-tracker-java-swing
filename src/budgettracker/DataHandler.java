@@ -434,4 +434,35 @@ public class DataHandler {
         }
     }// end of resetUserData()
     
+    // FOR EDIT PROFILE (still under ACCOUNT SECTION)
+    public static boolean updateUserName(int userId, String newName) {
+        String sql = "UPDATE users SET full_name = ? WHERE user_id = ?";
+        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newName);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean updateUserPassword(int userId, String newPlainPassword) {
+        // 1. Hash the new password
+        String hashedPass = PasswordHasher.hashPassword(newPlainPassword);
+
+        // 2. Now save the HASHED version to the database
+        String sql = "UPDATE users SET password = ? WHERE user_id = ?";
+        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, hashedPass);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating password: " + e.getMessage());
+            return false;
+        }
+    }
+    
 }
