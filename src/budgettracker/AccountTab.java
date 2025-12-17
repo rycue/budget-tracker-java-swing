@@ -139,28 +139,12 @@ public class AccountTab extends JPanel {
         logoutBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to logout?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                AccountManager.logout();
-                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-                if (frame != null) {
-                    frame.dispose();
-                }
+                AccountManager.setUserId(null);
 
-                // Restart Login Process
-                LoginDialog login = new LoginDialog(null);
-                login.setVisible(true);
+                Window mainFrame = SwingUtilities.getWindowAncestor(this);
+                mainFrame.dispose();
 
-                if (login.isSuccess()) {
-                    // 1. Create the app instance
-                    BudgetTracker newApp = new BudgetTracker();
-
-                    // 2. THE MISSING LINK: Explicitly tell the dashboard to fetch from DB
-                    newApp.getDashboardTab().loadFromDatabase();
-
-                    // 3. Show the app
-                    newApp.setVisible(true);
-                } else {
-                    System.exit(0);
-                }
+                BudgetTracker.showLogin();
             }
         });
 

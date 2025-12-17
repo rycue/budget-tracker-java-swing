@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public class AccountManager {
     private static UserAccount loggedInUser = null;
+    private static String userId;
     
     public static boolean register(UserAccount user) {
         
@@ -60,6 +61,10 @@ public class AccountManager {
     
     public static UserAccount getUser() {
         return loggedInUser;
+    }
+    
+    public static void setUserId(String id) {
+        userId = id;
     }
     
     public static boolean isLoggedIn() {

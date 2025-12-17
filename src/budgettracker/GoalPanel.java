@@ -18,6 +18,10 @@ public class GoalPanel extends JPanel {
         setLayout(new BorderLayout(5, 5));
         setBackground(Color.DARK_GRAY);
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        
+        setPreferredSize(new Dimension(400, 120));
+        setMinimumSize(new Dimension(400, 120));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         // Title
         titleLabel = new JLabel(goal.getName());
@@ -59,8 +63,19 @@ public class GoalPanel extends JPanel {
         removeBtn.setMaximumSize(new Dimension(100, 30));
         removeBtn.setBorder(BorderFactory.createLineBorder(Color.decode("#A00000"), 2));
         removeBtn.addActionListener(e -> {
+            Component parent = SwingUtilities.getWindowAncestor(this);
             if (removeAction != null) {
-                removeAction.run();
+                int confirm = JOptionPane.showConfirmDialog(
+                        parent,
+                        "Are you sure you want to remove the goal: " + goal.getName() + "?",
+                        "Confirm Deletion",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    removeAction.run();
+                }
             }
         });
 
@@ -86,24 +101,14 @@ public class GoalPanel extends JPanel {
             if (input != null && !input.trim().isEmpty()) {
                 try {
                     double amount = Double.parseDouble(input.trim());
-
+                    
                     if (amount <= 0) {
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "Amount must be greater than zero.",
-                                "Invalid Amount",
-                                JOptionPane.ERROR_MESSAGE
-                        );
+                        JOptionPane.showMessageDialog(this, "Amount must be greater than zero.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
                     if (amount > 1000000000) {
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "Amount is too large. Please enter a reasonable amount.",
-                                "Invalid Amount",
-                                JOptionPane.ERROR_MESSAGE
-                        );
+                        JOptionPane.showMessageDialog(this, "Amount is too large.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
@@ -111,18 +116,23 @@ public class GoalPanel extends JPanel {
                     if (amountStr.contains(".")) {
                         String[] parts = amountStr.split("\\.");
                         if (parts.length > 1 && parts[1].length() > 2) {
-                            JOptionPane.showMessageDialog(
-                                    this,
-                                    "Amount can have at most 2 decimal places.\nExample: 100.50",
-                                    "Invalid Amount",
-                                    JOptionPane.ERROR_MESSAGE
-                            );
+                            JOptionPane.showMessageDialog(this, "Amount can have at most 2 decimal places.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
                     }
-
+                    
                     goal.addManualProgress(amount);
-                    refresh();
+                    // SYNC TO DATABASE
+                    boolean success = DataHandler.updateGoalProgress(goal.getGoalID(), goal.getProgress());
+                    
+                    if (success) {
+                        refresh(); // Update the UI bars and labels
+                    } else {
+                        // Rollback local change if DB failed to keep them synced
+                        goal.addManualProgress(-amount);
+                        JOptionPane.showMessageDialog(this, "Failed to save progress to database.");
+                    }
+                    
 
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(
@@ -154,6 +164,8 @@ public class GoalPanel extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
+        
+        refresh();
     }
 
     public void setRemoveAction(Runnable action) {

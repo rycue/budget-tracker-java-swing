@@ -56,22 +56,67 @@ public class GoalsTab extends JPanel {
 
         if (dialog.isSaved()) {
             Goal goal = dialog.getGoal();
-            goals.add(goal);
+            UserAccount user = AccountManager.getUser(); // Get current logged-in user
 
-            GoalPanel panel = new GoalPanel(goal);
-            panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
-            panel.setRemoveAction(() -> removeGoal(goal, panel));
-            goalPanels.add(panel);
-            goalsContainer.add(panel);
-            goalsContainer.revalidate();
-            goalsContainer.repaint();
+            // SAVE TO DATABASE
+            int newId = DataHandler.saveGoal(goal, user.getUserID());
+
+            if (newId != -1) {
+                goal.setGoalID(newId); // Set the ID returned from databse
+                goals.add(goal);
+
+                GoalPanel panel = new GoalPanel(goal);
+                panel.refresh(); // Ensure ₱ amounts show immediately
+                panel.setRemoveAction(() -> removeGoal(goal, panel));
+
+                goalsContainer.add(panel);
+                goalsContainer.revalidate();
+                goalsContainer.repaint();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to save goal to database.");
+            }
         }
     }
 
     private void removeGoal(Goal goal, GoalPanel panel) {
-        goals.remove(goal);
-        goalPanels.remove(panel);
-        goalsContainer.remove(panel);
+        // 1. Remove from Database
+        boolean success = DataHandler.deleteGoal(goal.getGoalID());
+
+        if (success) {
+            // 2. If DB delete worked, remove from UI
+            goals.remove(goal);
+            goalPanels.remove(panel);
+            goalsContainer.remove(panel);
+
+            // Refresh the UI container
+            goalsContainer.revalidate();
+            goalsContainer.repaint();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error: Could not delete goal from database.");
+        }
+    }
+    
+    public void loadExistingGoals(int userId) {
+        goals.clear();
+        goalPanels.clear();
+        goalsContainer.removeAll();
+
+        // Fetch from Database
+        ArrayList<Goal> loadedGoals = DataHandler.loadGoals(userId);
+
+        // Rebuild the UI panels
+        for (Goal g : loadedGoals) {
+            goals.add(g);
+            GoalPanel panel = new GoalPanel(g);
+
+            // This is crucial: link the remove logic
+            panel.setRemoveAction(() -> removeGoal(g, panel));
+
+            goalPanels.add(panel);
+            goalsContainer.add(panel);
+        }
+
+        // Refresh UI
         goalsContainer.revalidate();
         goalsContainer.repaint();
     }
