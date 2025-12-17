@@ -6,7 +6,7 @@ import java.time.LocalDate;
 public class Transaction {
 
     public enum Type {
-        INCOME, EXPENSE
+        INCOME, EXPENSE, GOAL_DEPOSIT
     }
 
     private int transactionId;

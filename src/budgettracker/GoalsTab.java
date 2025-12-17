@@ -79,20 +79,28 @@ public class GoalsTab extends JPanel {
     }
 
     private void removeGoal(Goal goal, GoalPanel panel) {
-        // 1. Remove from Database
-        boolean success = DataHandler.deleteGoal(goal.getGoalID());
+        String[] options = {"Refund to Balance", "Permanent Delete", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(this,
+                "This goal has ₱" + String.format("%.2f", goal.getProgress()) + " saved. What should we do?",
+                "Delete Goal",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, options, options[0]);
 
-        if (success) {
-            // 2. If DB delete worked, remove from UI
-            goals.remove(goal);
-            goalPanels.remove(panel);
-            goalsContainer.remove(panel);
+        if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
+            return; // Exit if Cancel
+        }
+        boolean refund = (choice == 0);
+        int userId = Integer.parseInt(AccountManager.getUserId());
 
-            // Refresh the UI container
-            goalsContainer.revalidate();
-            goalsContainer.repaint();
+        if (DataHandler.deleteGoal(goal.getGoalID(), userId, refund, goal.getProgress())) {
+            // Refresh all tabs so the balance and goal list update instantly
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof BudgetTracker) {
+                ((BudgetTracker) window).refreshAllTabs();
+            }
         } else {
-            JOptionPane.showMessageDialog(this, "Error: Could not delete goal from database.");
+            JOptionPane.showMessageDialog(this, "Error: Could not delete goal.");
         }
     }
     

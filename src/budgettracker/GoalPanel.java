@@ -91,56 +91,28 @@ public class GoalPanel extends JPanel {
         addBtn.setToolTipText("Add to Goal");
 
         addBtn.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(
-                    this,
-                    "Enter amount to add to \"" + goal.getName() + "\":",
-                    "Add to Goal",
-                    JOptionPane.PLAIN_MESSAGE
-            );
+            String input = JOptionPane.showInputDialog(this, "Amount to deposit into \"" + goal.getName() + "\":");
 
             if (input != null && !input.trim().isEmpty()) {
                 try {
                     double amount = Double.parseDouble(input.trim());
-                    
-                    if (amount <= 0) {
-                        JOptionPane.showMessageDialog(this, "Amount must be greater than zero.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
+                    // ... (keep your existing validation logic here) ...
 
-                    if (amount > 1000000000) {
-                        JOptionPane.showMessageDialog(this, "Amount is too large.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
+                    int userId = Integer.parseInt(AccountManager.getUserId());
 
-                    String amountStr = input.trim();
-                    if (amountStr.contains(".")) {
-                        String[] parts = amountStr.split("\\.");
-                        if (parts.length > 1 && parts[1].length() > 2) {
-                            JOptionPane.showMessageDialog(this, "Amount can have at most 2 decimal places.", "Invalid Amount", JOptionPane.ERROR_MESSAGE);
-                            return;
-                        }
-                    }
-                    
-                    goal.addManualProgress(amount);
-                    // SYNC TO DATABASE
-                    boolean success = DataHandler.updateGoalProgress(goal.getGoalID(), goal.getProgress());
-                    
+                    // Trigger the double-action (Update Goal + Create Expense)
+                    boolean success = DataHandler.fundGoal(userId, goal.getGoalID(), amount, goal.getName());
+
                     if (success) {
-                        refresh(); // Update the UI bars and labels
-                    } else {
-                        // Rollback local change if DB failed to keep them synced
-                        goal.addManualProgress(-amount);
-                        JOptionPane.showMessageDialog(this, "Failed to save progress to database.");
+                        // Precision Fix: Find the top-level app and refresh EVERYTHING
+                        Window window = SwingUtilities.getWindowAncestor(this);
+                        if (window instanceof BudgetTracker) {
+                            ((BudgetTracker) window).refreshAllTabs();
+                        }
+                        JOptionPane.showMessageDialog(this, "Successfully saved ₱" + amount);
                     }
-                    
-
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Please enter a valid number.\nExample: 100 or 100.50",
-                            "Invalid Input",
-                            JOptionPane.ERROR_MESSAGE
-                    );
+                    JOptionPane.showMessageDialog(this, "Please enter a valid number.");
                 }
             }
         });

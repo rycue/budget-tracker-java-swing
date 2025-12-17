@@ -284,16 +284,80 @@ public class DataHandler {
         return list;
     }
     
-    public static boolean deleteGoal(int goalId) {
-        String sql = "DELETE FROM goals WHERE goal_id = ?";
-        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+    // Inside DataHandler.java
+    public static boolean deleteGoal(int goalId, int userId, boolean refund, double amount) {
+        try (Connection conn = SQLConnector.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                if (refund && amount > 0) {
+                    int catId = getCategoryIdByName("Goal Refund", userId, Transaction.Type.INCOME);
 
-            ps.setInt(1, goalId);
-            int rowsAffected = ps.executeUpdate();
+                    String refundSQL = "INSERT INTO transactions (user_id, category_id, amount, note, created_at) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement ps = conn.prepareStatement(refundSQL)) {
+                        ps.setInt(1, userId);
+                        ps.setInt(2, catId);
+                        ps.setDouble(3, amount);
+                        ps.setString(4, "Refund from deleted goal");
+                        ps.setTimestamp(5, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+                        ps.executeUpdate();
+                    }
+                }
 
-            return rowsAffected > 0;
+                String deleteSQL = "DELETE FROM goals WHERE goal_id = ? AND user_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(deleteSQL)) {
+                    ps.setInt(1, goalId);
+                    ps.setInt(2, userId);
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
+                return false;
+            }
         } catch (SQLException e) {
-            System.err.println("Error deleting goal: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean fundGoal(int userId, int goalId, double amount, String goalName) {
+        try (Connection conn = SQLConnector.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // Update Goal
+                String updateGoal = "UPDATE goals SET current_amount = current_amount + ? WHERE goal_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(updateGoal)) {
+                    ps.setDouble(1, amount);
+                    ps.setInt(2, goalId);
+                    ps.executeUpdate();
+                }
+
+                // GET THE CATEGORY ID (Best Practice: Use your helper!)
+                int catId = getCategoryIdByName("Goal Savings", userId, Transaction.Type.EXPENSE);
+
+                // Insert Transaction using category_id
+                String insertTrans = "INSERT INTO transactions (user_id, category_id, amount, note, created_at) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement ps = conn.prepareStatement(insertTrans)) {
+                    ps.setInt(1, userId);
+                    ps.setInt(2, catId);
+                    ps.setDouble(3, amount);
+                    ps.setString(4, "Deposit to: " + goalName);
+                    ps.setTimestamp(5, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
             return false;
         }
     }
