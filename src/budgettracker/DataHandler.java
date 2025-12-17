@@ -138,7 +138,7 @@ public class DataHandler {
         // Use an INNER JOIN to get the Category Name and Type from the categories table
         String sql = "SELECT t.*, c.name AS cat_name, c.type AS cat_type "
                 + "FROM transactions t "
-                + "JOIN categories c ON t.category_id = c.category_id "
+                + "LEFT JOIN categories c ON t.category_id = c.category_id "
                 + "WHERE t.user_id = ? ORDER BY t.created_at DESC";
 
         try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -167,14 +167,27 @@ public class DataHandler {
         return list;
     } // end of loadTransactions()
     
+    
+    
+    public static boolean deleteTransaction(int transactionId) {
+        String sql = "DELETE FROM transactions WHERE transaction_id = ?";
+        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, transactionId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Delete Error: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    
     public static boolean saveToDatabase(Transaction t, int userId) {
         String sql = "INSERT INTO transactions (user_id, category_id, amount, note, created_at) VALUES (?, ?, ?, ?, ?)";
-
         try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
-            // Translate "Food" -> ID
-            ps.setInt(2, getCategoryIdByName(t.getCategory(), userId));
+            // Pass the transaction type so the helper can create the category if it's missing
+            ps.setInt(2, getCategoryIdByName(t.getCategory(), userId, t.getType()));
             ps.setDouble(3, t.getAmount());
             ps.setString(4, t.getNote());
             ps.setTimestamp(5, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
@@ -186,20 +199,41 @@ public class DataHandler {
         }
     }
 
-    // Helper to find the ID from 'categories' table
-    private static int getCategoryIdByName(String name, int userId) {
-        String sql = "SELECT category_id FROM categories WHERE name = ? AND user_id = ?";
-        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, name);
-            ps.setInt(2, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("category_id");
+    private static int getCategoryIdByName(String name, int userId, Transaction.Type type) {
+        // FIX: Match the NAME, the USER, AND the TYPE (income/expense)
+        String selectSql = "SELECT category_id FROM categories WHERE name = ? AND user_id = ? AND type = ?";
+        String insertSql = "INSERT INTO categories (user_id, name, type) VALUES (?, ?, ?)";
+
+        String typeStr = type.toString().toLowerCase(); // "income" or "expense"
+
+        try (Connection conn = SQLConnector.getInstance().getConnection()) {
+            // 1. Look for the exact match
+            try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+                ps.setString(1, name);
+                ps.setInt(2, userId);
+                ps.setString(3, typeStr);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    return rs.getInt("category_id");
+                }
+            }
+
+            // 2. If not found, create a NEW row specifically for this type
+            try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, userId);
+                ps.setString(2, name);
+                ps.setString(3, typeStr);
+                ps.executeUpdate();
+
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return 1; // Default to first category if not found
+        return 1;
     }
     
     
