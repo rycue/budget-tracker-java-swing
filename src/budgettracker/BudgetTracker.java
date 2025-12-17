@@ -172,6 +172,26 @@ public class BudgetTracker extends JFrame {
         }
     }
     
+    public void refreshAllTabs() {
+        // 1. Reload transactions into the Dashboard
+        if (dashboardTab != null) {
+            dashboardTab.loadFromDatabase();
+        }
+
+        // 2. Reload goals
+        String uid = AccountManager.getUserId();
+        if (uid != null && goalsTab != null) {
+            goalsTab.loadExistingGoals(Integer.parseInt(uid));
+        }
+
+        // 3. Refresh the Account UI labels
+        if (accountTab != null) {
+            accountTab.refresh();
+        }
+
+        System.out.println("LOG: Global refresh complete. UI is now synced with Database.");
+    }
+    
     public static void main(String[] args) {
         showLogin();
     }

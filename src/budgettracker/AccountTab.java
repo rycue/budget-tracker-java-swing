@@ -147,6 +147,65 @@ public class AccountTab extends JPanel {
                 BudgetTracker.showLogin();
             }
         });
+        
+        // 10. DELETE ACCOUNT
+        deleteAccountBtn.addActionListener(e -> {
+            // 1. Double Confirmation (Danger Zone!)
+            int confirm = JOptionPane.showConfirmDialog(this, """
+                                                              EXTREME DANGER: This will permanently delete your account and all financial history.
+                                                              This action cannot be undone. Are you absolutely sure?""",
+                    "Delete Account", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                String userIdStr = AccountManager.getUserId();
+                if (userIdStr != null) {
+                    int userId = Integer.parseInt(userIdStr);
+
+                    // 2. Execute the Transactional Delete
+                    boolean success = DataHandler.deleteFullAccount(userId);
+
+                    if (success) {
+                        JOptionPane.showMessageDialog(this, "Your account has been wiped from the system.");
+
+                        // 3. Force Logout and redirect to Login
+                        AccountManager.logout();
+                        Window mainFrame = SwingUtilities.getWindowAncestor(this);
+                        if (mainFrame != null) {
+                            mainFrame.dispose();
+                        }
+                        BudgetTracker.showLogin();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Error: Could not delete account. Check database connection.");
+                    }
+                }
+            }
+        });
+        
+        // 11. CLEAR DATA
+        resetDataBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this, """
+                                                              Are you sure you want to wipe all transactions and goals?
+                                                              Your account profile will remain, but all data will be lost.""",
+                    "Reset Data", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                String userIdStr = AccountManager.getUserId();
+                if (userIdStr != null) {
+                    int userId = Integer.parseInt(userIdStr);
+
+                    if (DataHandler.resetUserData(userId)) {
+                        JOptionPane.showMessageDialog(this, "All data has been cleared.");
+                        // Find the main BudgetTracker frame and tell it to refresh
+                        Window parentWindow = SwingUtilities.getWindowAncestor(this);
+                        if (parentWindow instanceof BudgetTracker) {
+                            ((BudgetTracker) parentWindow).refreshAllTabs();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Reset failed. Check connection.");
+                    }
+                }
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(mainContainer);
         scrollPane.setBorder(null);

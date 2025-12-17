@@ -313,5 +313,125 @@ public class DataHandler {
         }
     }
     
+    // ACCOUNT SECTION
+    public static boolean deleteFullAccount(int userId) {
+        Connection conn = null;
+        try {
+            conn = SQLConnector.getInstance().getConnection();
+            // 1. Disable Auto-Commit to start the transaction block
+            conn.setAutoCommit(false);
+
+            // 2. Delete Child Records First (Order matters for Foreign Keys!)
+            String delTransactions = "DELETE FROM transactions WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delTransactions)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            String delGoals = "DELETE FROM goals WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delGoals)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            String delCategories = "DELETE FROM categories WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delCategories)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            // 3. Finally, delete the User
+            String delUser = "DELETE FROM users WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delUser)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            // 4. COMMIT if everything above succeeded
+            conn.commit();
+            System.out.println("LOG: Account " + userId + " and all data permanently deleted.");
+            return true;
+
+        } catch (SQLException e) {
+            // 5. ROLLBACK if any error occurred
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    System.err.println("LOG: Deletion failed. Changes rolled back.");
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            // 6. Restore default behavior and close
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }   
+    } // end of  deleteFullAccount()
+    
+    public static boolean resetUserData(int userId) {
+        Connection conn = null;
+        try {
+            conn = SQLConnector.getInstance().getConnection();
+            conn.setAutoCommit(false); // Start Transaction
+
+            // 1. Delete all history but keep the user profile
+            String delTransactions = "DELETE FROM transactions WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delTransactions)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            String delGoals = "DELETE FROM goals WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delGoals)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            String delCategories = "DELETE FROM categories WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(delCategories)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            // 2. Optional: Reset user balance to 0 in the users table
+            String resetBalance = "UPDATE users SET balance = 0 WHERE user_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(resetBalance)) {
+                ps.setInt(1, userId);
+                ps.executeUpdate();
+            }
+
+            conn.commit(); // Success!
+            return true;
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }// end of resetUserData()
     
 }
