@@ -7,139 +7,121 @@ public class AccountTab extends JPanel {
 
     private JLabel nameLbl, emailLbl, passwordLbl, createdLbl;
     private JPasswordField passwordField;
-    private JButton logoutBtn, toggleBtn, editProfileBtn;
+    private JButton logoutBtn, toggleBtn, editProfileBtn, resetDataBtn, changePasswordBtn, deleteAccountBtn;
 
     public AccountTab() {
+        // 1. INITIALIZE BUTTONS
+        editProfileBtn = new JButton("Edit Profile");
+        logoutBtn = new JButton("Logout");
+        changePasswordBtn = new JButton("Change Password");
+        resetDataBtn = new JButton("Reset Data");
+        deleteAccountBtn = new JButton("Delete Account");
+
+        styleActionButton(editProfileBtn);
+        styleActionButton(logoutBtn);
+        styleActionButton(changePasswordBtn);
+        styleActionButton(resetDataBtn);
+        styleActionButton(deleteAccountBtn);
+
+        // 2. MAIN PANEL SETUP
         setBackground(Color.decode("#121212"));
         setLayout(new BorderLayout());
 
-        // Main container with centered content
         JPanel mainContainer = new JPanel();
         mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
         mainContainer.setBackground(Color.decode("#121212"));
         mainContainer.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
-        // PROFILE CARD
+        // 3. PROFILE CARD
         JPanel profileCard = createCard("Profile Information");
         nameLbl = new JLabel("Name: --");
         emailLbl = new JLabel("Email: --");
         styleLabel(nameLbl);
         styleLabel(emailLbl);
-        
         profileCard.add(nameLbl);
         profileCard.add(Box.createVerticalStrut(10));
         profileCard.add(emailLbl);
 
-        // SECURITY CARD
+        // 4. SECURITY CARD
         JPanel securityCard = createCard("Security");
-        
-        // Password label and field container
-        JPanel passwordContainer = new JPanel();
-        passwordContainer.setLayout(new BoxLayout(passwordContainer, BoxLayout.Y_AXIS));
-        passwordContainer.setBackground(Color.decode("#1b1b1b"));
-        passwordContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
         passwordLbl = new JLabel("Password:");
         styleLabel(passwordLbl);
-        passwordContainer.add(passwordLbl);
-        passwordContainer.add(Box.createVerticalStrut(10));
-        
+
         JPanel passPanel = new JPanel(new BorderLayout(10, 0));
         passPanel.setBackground(Color.decode("#2a2a2a"));
         passPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         passPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         passPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        
 
         passwordField = new JPasswordField(20);
-        passwordField.setText("--");
+        passwordField.setText("------------");
+        passwordField.setEditable(false);
         passwordField.setForeground(Color.GREEN);
         passwordField.setBackground(Color.decode("#2a2a2a"));
         passwordField.setFont(new Font("Arial", Font.PLAIN, 18));
         passwordField.setBorder(BorderFactory.createEmptyBorder());
         passwordField.setEchoChar('•');
+        
+        passwordField.setMinimumSize(new Dimension(200, 30));
+        passwordField.setPreferredSize(new Dimension(300, 30));
 
         toggleBtn = new JButton("👁");
-        toggleBtn.setPreferredSize(new Dimension(40, 30));
-        toggleBtn.setFocusPainted(false);
+        toggleBtn.setPreferredSize(new Dimension(60, 30));
         toggleBtn.setBackground(Color.decode("#3a3a3a"));
         toggleBtn.setForeground(Color.GREEN);
-        toggleBtn.setBorder(BorderFactory.createLineBorder(Color.decode("#4a4a4a"), 1));
-
         toggleBtn.addActionListener(e -> {
-            if (passwordField.getEchoChar() == (char) 0) {
-                passwordField.setEchoChar('•');
-            } else {
+            UserAccount user = AccountManager.getUser();
+            if (passwordField.getEchoChar() == '•') {
                 passwordField.setEchoChar((char) 0);
+                passwordField.setText(user.getPassword());
+                toggleBtn.setText("🔒"); // Change icon to locked
+            } else {
+                // HIDE: Go back to bullets
+                passwordField.setEchoChar('•');
+                passwordField.setText("**********");
+                toggleBtn.setText("👁");
             }
         });
 
         passPanel.add(passwordField, BorderLayout.CENTER);
         passPanel.add(toggleBtn, BorderLayout.EAST);
-        
-        passwordContainer.add(passPanel);
-        securityCard.add(passwordContainer);
 
+        securityCard.add(passwordLbl);
+        securityCard.add(Box.createVerticalStrut(10));
+        securityCard.add(passPanel);
+
+        // 5. ACCOUNT DETAILS CARD
         JPanel accountCard = createCard("Account Details");
         createdLbl = new JLabel("Account Created: --");
         styleLabel(createdLbl);
-        
         accountCard.add(createdLbl);
 
-        // ACTIONS CARD
+        // 6. ACTIONS CARD
         JPanel actionsCard = createCard("Actions");
-        
-        // Button container for buttons on the same line
-        JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        buttonContainer.setBackground(Color.decode("#1b1b1b"));
-        buttonContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        buttonContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        
-        editProfileBtn = new JButton("Edit Profile");
-        styleActionButton(editProfileBtn);
-        
-        editProfileBtn.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                this,
-                "Edit Profile feature coming soon!",
-                "Edit Profile",
-                JOptionPane.INFORMATION_MESSAGE
-            );
-        });
-        
-        logoutBtn = new JButton("Logout");
-        styleActionButton(logoutBtn);
-        
-        logoutBtn.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to logout?",
-                "Confirm Logout",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-            );
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                AccountManager.logout();
-                
-                JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-                mainFrame.dispose();
-                
-                LoginDialog login = new LoginDialog(null);
-                login.setVisible(true);
-                
-                if (login.isSuccess()) {
-                    new BudgetTracker().setVisible(true);
-                } else {
-                    System.exit(0);
-                }
-            }
-        });
+        JPanel actionButtonBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 10));
+        actionButtonBox.setBackground(Color.decode("#1b1b1b"));
+        actionButtonBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        buttonContainer.add(editProfileBtn);
-        buttonContainer.add(logoutBtn);
-        
-        actionsCard.add(buttonContainer);
+        actionButtonBox.add(editProfileBtn);
+        actionButtonBox.add(Box.createHorizontalStrut(10));
+        actionButtonBox.add(logoutBtn);
+        actionsCard.add(actionButtonBox);
 
+        // 7. DANGER ZONE CARD
+        JPanel dangerCard = createCard("Danger Zone");
+        styleDangerTitle(dangerCard);
+
+        JPanel dangerButtonBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 10));
+        dangerButtonBox.setBackground(Color.decode("#1b1b1b"));
+        dangerButtonBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        dangerButtonBox.add(resetDataBtn);
+        dangerButtonBox.add(Box.createHorizontalStrut(10));
+        dangerButtonBox.add(deleteAccountBtn);
+        dangerCard.add(dangerButtonBox);
+
+        // 8. ADD EVERYTHING TO MAIN VIEW
         mainContainer.add(profileCard);
         mainContainer.add(Box.createVerticalStrut(15));
         mainContainer.add(securityCard);
@@ -147,15 +129,89 @@ public class AccountTab extends JPanel {
         mainContainer.add(accountCard);
         mainContainer.add(Box.createVerticalStrut(15));
         mainContainer.add(actionsCard);
-        mainContainer.add(Box.createVerticalGlue()); // Push everything to top
+        mainContainer.add(Box.createVerticalStrut(15));
+        mainContainer.add(dangerCard);
+        mainContainer.add(Box.createVerticalGlue());
 
-        // Wrap in scroll pane
+        // 9. LOGIC - RESTORED LOGOUT & EDIT POPUP
+        editProfileBtn.addActionListener(e -> showEditProfileDialog());
+
+        logoutBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to logout?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                AccountManager.logout();
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                if (frame != null) {
+                    frame.dispose();
+                }
+
+                // Restart Login Process
+                LoginDialog login = new LoginDialog(null);
+                login.setVisible(true);
+
+                if (login.isSuccess()) {
+                    // 1. Create the app instance
+                    BudgetTracker newApp = new BudgetTracker();
+
+                    // 2. THE MISSING LINK: Explicitly tell the dashboard to fetch from DB
+                    newApp.getDashboardTab().loadFromDatabase();
+
+                    // 3. Show the app
+                    newApp.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
+            }
+        });
+
         JScrollPane scrollPane = new JScrollPane(mainContainer);
         scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
 
         refresh();
+    }
+
+    private void showEditProfileDialog() {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Profile", true);
+        dialog.getContentPane().setBackground(Color.decode("#1b1b1b"));
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(Color.decode("#1b1b1b"));
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel nameLabel = new JLabel("Full Name:");
+        styleLabel(nameLabel);
+        JTextField nameField = new JTextField(20);
+        nameField.setBackground(Color.decode("#2a2a2a"));
+        nameField.setForeground(Color.WHITE);
+        nameField.setCaretColor(Color.WHITE);
+        nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        nameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        content.add(nameLabel);
+        content.add(Box.createVerticalStrut(10));
+        content.add(nameField);
+        content.add(Box.createVerticalStrut(20));
+
+        JLabel secLabel = new JLabel("Security:");
+        styleLabel(secLabel);
+        content.add(secLabel);
+        content.add(Box.createVerticalStrut(10));
+
+        changePasswordBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.add(changePasswordBtn);
+
+        content.add(Box.createVerticalStrut(30));
+        JButton saveBtn = new JButton("Save Changes");
+        styleActionButton(saveBtn);
+        saveBtn.addActionListener(e -> dialog.dispose());
+        content.add(saveBtn);
+
+        dialog.add(content);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private JPanel createCard(String title) {
@@ -163,28 +219,23 @@ public class AccountTab extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.decode("#1b1b1b"));
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.decode("#2a2a2a"), 2),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+                BorderFactory.createLineBorder(Color.decode("#2a2a2a"), 2),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        // Card title
         JLabel titleLabel = new JLabel(title);
         titleLabel.setForeground(Color.GREEN);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(10));
-        
-        JSeparator separator = new JSeparator();
-        separator.setForeground(Color.decode("#2a2a2a"));
-        separator.setBackground(Color.decode("#2a2a2a"));
-        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        separator.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.add(separator);
-        card.add(Box.createVerticalStrut(10));
 
+        JSeparator sep = new JSeparator();
+        sep.setForeground(Color.decode("#2a2a2a"));
+        sep.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(sep);
+        card.add(Box.createVerticalStrut(10));
         return card;
     }
 
@@ -197,20 +248,32 @@ public class AccountTab extends JPanel {
     private void styleActionButton(JButton btn) {
         btn.setBackground(Color.decode("#2a2a2a"));
         btn.setForeground(Color.GREEN);
-        btn.setFocusPainted(false);
         btn.setFont(new Font("Arial", Font.BOLD, 16));
-        btn.setPreferredSize(new Dimension(150, 40));
+        btn.setFocusPainted(false);
+        btn.setPreferredSize(new Dimension(180, 45));
+        btn.setMaximumSize(new Dimension(180, 45));
         btn.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.GREEN, 2),
-            BorderFactory.createEmptyBorder(5, 15, 5, 15)
+                BorderFactory.createLineBorder(Color.GREEN, 2),
+                BorderFactory.createEmptyBorder(5, 15, 5, 15)
         ));
         
-        // Hover effect
+        Dimension size = new Dimension(200, 45);
+        btn.setPreferredSize(size);
+        btn.setMinimumSize(size);
+        btn.setMaximumSize(size);
+        
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.GREEN, 2),
+                BorderFactory.createEmptyBorder(5, 15, 5, 15)
+        ));
+
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 btn.setBackground(Color.GREEN);
                 btn.setForeground(Color.BLACK);
             }
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 btn.setBackground(Color.decode("#2a2a2a"));
                 btn.setForeground(Color.GREEN);
@@ -218,22 +281,29 @@ public class AccountTab extends JPanel {
         });
     }
 
+    private void styleDangerTitle(JPanel card) {
+        for (Component c : card.getComponents()) {
+            if (c instanceof JLabel) {
+                c.setForeground(Color.RED);
+            }
+        }
+    }
+
     public void refresh() {
         UserAccount user = AccountManager.getUser();
         if (user != null) {
+            String pass = user.getPassword();
+            System.out.println("Debug: Password retrieved is: [" + user.getPassword() + "]");
+
+            if (pass != null && !pass.isEmpty()) {
+                passwordField.setText(pass);
+            } else {
+                passwordField.setText("********");
+            }
+
             nameLbl.setText("Name: " + user.getFullName());
             emailLbl.setText("Email: " + user.getEmail());
-            passwordField.setText(user.getPassword());
             createdLbl.setText("Account Created: " + user.getDateCreated());
-            logoutBtn.setEnabled(true);
-            editProfileBtn.setEnabled(true);
-        } else {
-            nameLbl.setText("Name: --");
-            emailLbl.setText("Email: --");
-            passwordField.setText("--");
-            createdLbl.setText("Account Created: --");
-            logoutBtn.setEnabled(false);
-            editProfileBtn.setEnabled(false);
         }
     }
 }

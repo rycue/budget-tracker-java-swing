@@ -3,6 +3,11 @@ package budgettracker;
 
 import java.time.LocalDateTime;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 
 public class DataHandler {
@@ -96,23 +101,25 @@ public class DataHandler {
         try (java.sql.ResultSet resultSet = connector.getUserByID(userID)) {
 
             if (resultSet != null && resultSet.next()) {
-                // Retrieve all data fields
+
+                int numericID = Integer.parseInt(userID);
+
                 String fullName = resultSet.getString("full_name");
                 String email = resultSet.getString("email");
-                // NOTE: We do not retrieve the password hash here!
+                String password = resultSet.getString("password");
                 String secretQuestion = resultSet.getString("secret_question");
                 String secretAnswer = resultSet.getString("secret_answer");
 
-                // Create the UserAccount object
+                // 2. PASS numericID into the constructor so the object "knows" who it is
                 UserAccount account = new UserAccount(
+                        numericID,
                         fullName,
                         email,
-                        "", // Password field is left empty or null for security reasons
+                        password,
                         secretQuestion,
                         secretAnswer
                 );
 
-                // account.setUserID(userID);
                 return account;
             }
             // If resultSet.next() is false, the user was not found, or the ResultSet was null
@@ -124,5 +131,76 @@ public class DataHandler {
             return null;
         }
     } // end of loadUserAccount()
+    
+    public static List<Transaction> loadTransactions(int userId) {
+        List<Transaction> list = new ArrayList<>();
+        // Use an INNER JOIN to get the Category Name and Type from the categories table
+        String sql = "SELECT t.*, c.name AS cat_name, c.type AS cat_type "
+                + "FROM transactions t "
+                + "JOIN categories c ON t.category_id = c.category_id "
+                + "WHERE t.user_id = ? ORDER BY t.created_at DESC";
+
+        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                // Determine if it's INCOME or EXPENSE based on the category table
+                String typeStr = rs.getString("cat_type");
+                Transaction.Type type = typeStr.equalsIgnoreCase("INCOME")
+                        ? Transaction.Type.INCOME : Transaction.Type.EXPENSE;
+
+                list.add(new Transaction(
+                        rs.getInt("transaction_id"),
+                        type, // Now uses the real type from the DB!
+                        rs.getString("cat_name"), // Now uses the real name (e.g., "Food")
+                        rs.getString("note"),
+                        rs.getDouble("amount"),
+                        rs.getTimestamp("created_at").toLocalDateTime().toLocalDate()
+                ));
+            }
+        } catch (Exception e) {
+            System.err.println("DataHandler Load Error: " + e.getMessage());
+        }
+        return list;
+    }
+    
+    public static boolean saveToDatabase(Transaction t, int userId) {
+        String sql = "INSERT INTO transactions (user_id, category_id, amount, note, created_at) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            // Translate "Food" -> ID
+            ps.setInt(2, getCategoryIdByName(t.getCategory(), userId));
+            ps.setDouble(3, t.getAmount());
+            ps.setString(4, t.getNote());
+            ps.setTimestamp(5, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
+
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            System.err.println("DB Save Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Helper to find the ID from 'categories' table
+    private static int getCategoryIdByName(String name, int userId) {
+        String sql = "SELECT category_id FROM categories WHERE name = ? AND user_id = ?";
+        try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setInt(2, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("category_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 1; // Default to first category if not found
+    }
+    
+    
     
 }

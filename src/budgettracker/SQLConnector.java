@@ -26,7 +26,7 @@ public class SQLConnector {
         return instance;
     }
 
-    private Connection getConnection() throws SQLException {
+    public Connection getConnection() throws SQLException {
         Connection conn = DriverManager.getConnection(
                 ADDRESS, USERNAME, PASSWORD);
         return conn;
@@ -91,7 +91,7 @@ public class SQLConnector {
     }
     
     public ResultSet getUserByID(String userID) {
-        String sql = "SELECT user_id, full_name, email, secret_question, secret_answer, balance FROM users WHERE user_id = ?";
+        String sql = "SELECT user_id, full_name, email, password, secret_question, secret_answer, balance FROM users WHERE user_id = ?";
 
         try {
             java.sql.Connection connection = getConnection();
