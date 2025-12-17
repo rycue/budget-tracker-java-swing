@@ -153,8 +153,8 @@ public class DataHandler {
 
                 list.add(new Transaction(
                         rs.getInt("transaction_id"),
-                        type, // Now uses the real type from the DB!
-                        rs.getString("cat_name"), // Now uses the real name (e.g., "Food")
+                        type, 
+                        rs.getString("cat_name"),
                         rs.getString("note"),
                         rs.getDouble("amount"),
                         rs.getTimestamp("created_at").toLocalDateTime().toLocalDate()
@@ -164,7 +164,7 @@ public class DataHandler {
             System.err.println("DataHandler Load Error: " + e.getMessage());
         }
         return list;
-    }
+    } // end of loadTransactions()
     
     public static boolean saveToDatabase(Transaction t, int userId) {
         String sql = "INSERT INTO transactions (user_id, category_id, amount, note, created_at) VALUES (?, ?, ?, ?, ?)";
