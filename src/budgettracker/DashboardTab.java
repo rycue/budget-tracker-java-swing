@@ -27,25 +27,45 @@ public class DashboardTab extends JPanel {
         setBackground(Color.BLACK);
 
         // TOP PANEL
-        JPanel topPanel = new JPanel(new BorderLayout());
+        // --- TOP PANEL REFACTOR ---
+        JPanel topPanel = new JPanel(new GridBagLayout());
         topPanel.setBackground(Color.BLACK);
+// CRITICAL: Add padding so text doesn't touch the window edges
+        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
-        balanceLabel = createLabel("BALANCE: ₱0.00", 32);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
+
+// 1. Primary Stat: Monthly Savings
+// We use a larger font and center it to create a clear focal point
+        balanceLabel = createLabel("MONTHLY SAVINGS: ₱0.00", 28);
         balanceLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        topPanel.add(balanceLabel, BorderLayout.NORTH);
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 15, 0); // Bottom margin to separate from sub-stats
+        topPanel.add(balanceLabel, gbc);
 
-        JPanel iePanel = new JPanel(new GridLayout(1, 2, 10, 0));
+// 2. Sub-stats Container (Income & Expense)
+// Using a 1x2 Grid with horizontal gaps for breathing room
+        JPanel iePanel = new JPanel(new GridLayout(1, 2, 30, 0));
         iePanel.setBackground(Color.BLACK);
 
-        incomeLabel = createLabel("INCOME: ₱0.00", 24);
+// Use specific color coding: Green for Income, Red-Orange for Expense
+        incomeLabel = createLabel("INCOME: ₱0.00", 18);
+        incomeLabel.setForeground(new Color(50, 205, 50)); // Lime Green
         incomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        expenseLabel = createLabel("EXPENSE: ₱0.00", 24);
+        expenseLabel = createLabel("EXPENSE: ₱0.00", 18);
+        expenseLabel.setForeground(new Color(255, 69, 0)); // Red-Orange
         expenseLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         iePanel.add(incomeLabel);
         iePanel.add(expenseLabel);
-        topPanel.add(iePanel, BorderLayout.CENTER);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 0, 0); // Reset margins
+        topPanel.add(iePanel, gbc);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -79,15 +99,29 @@ public class DashboardTab extends JPanel {
         historyPanel.add(new JScrollPane(transactionTable), BorderLayout.CENTER);
 
         add(historyPanel, BorderLayout.CENTER);
+        // Dark Mode Table Styling
+        transactionTable.setBackground(Color.BLACK);
+        transactionTable.setForeground(Color.GREEN);
+        transactionTable.setGridColor(Color.DARK_GRAY);
+        transactionTable.getTableHeader().setBackground(Color.DARK_GRAY);
+        transactionTable.getTableHeader().setForeground(Color.WHITE);
+
+// Ensure the scroll pane matches
+        JScrollPane scrollPane = new JScrollPane(transactionTable);
+        scrollPane.getViewport().setBackground(Color.BLACK);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        historyPanel.add(scrollPane, BorderLayout.CENTER);
         
     }
 
     private JLabel createLabel(String text, int fontSize) {
         JLabel lbl = new JLabel(text);
         lbl.setForeground(Color.GREEN);
-        lbl.setFont(new Font("Arial", Font.BOLD, fontSize));
+        lbl.setFont(new Font("SansSerif", Font.BOLD, fontSize));
         return lbl;
     }
+    
+    
 
     public void setGoalsTab(GoalsTab goalsTab) {
         this.goalsTab = goalsTab;
@@ -103,20 +137,26 @@ public class DashboardTab extends JPanel {
 
     private void refreshAll() {
         tableModel.setRowCount(0);
-
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+        // Get the current month for filtering
+        java.time.YearMonth currentMonth = java.time.YearMonth.now();
+
         for (Transaction t : transactions) {
-            tableModel.addRow(new Object[]{
+            // ONLY add to the table if it belongs to the current month
+            if (java.time.YearMonth.from(t.getDate()).equals(currentMonth)) {
+                tableModel.addRow(new Object[]{
                     t.getDate().format(df),
                     t.getType(),
                     t.getCategory(),
                     t.getNote(),
                     String.format("₱%.2f", t.getAmount()),
-                    "-" // BIG MINUS SIGN AS BUTTON
-            });
+                    "-"
+                });
+            }
         }
 
+        // This now calculates totals based on the same logic
         updateTotals();
 
         if (analyticsTab != null) {
@@ -125,19 +165,27 @@ public class DashboardTab extends JPanel {
     }
 
     private void updateTotals() {
+        java.time.YearMonth currentMonth = java.time.YearMonth.now();
+
+        // Calculate Monthly Income
         double income = transactions.stream()
                 .filter(t -> t.getType() == Transaction.Type.INCOME)
+                // CRITICAL: Filter for current month and year only
+                .filter(t -> java.time.YearMonth.from(t.getDate()).equals(currentMonth))
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
+        // Calculate Monthly Expense
         double expense = transactions.stream()
                 .filter(t -> t.getType() == Transaction.Type.EXPENSE)
+                // CRITICAL: Filter for current month and year only
+                .filter(t -> java.time.YearMonth.from(t.getDate()).equals(currentMonth))
                 .mapToDouble(Transaction::getAmount)
                 .sum();
 
-        double balance = income - expense;
+        double monthlySavings = income - expense;
 
-        balanceLabel.setText(String.format("BALANCE: ₱%.2f", balance));
+        balanceLabel.setText(String.format("MONTHLY SAVINGS: ₱%.2f", monthlySavings));
         incomeLabel.setText(String.format("INCOME: ₱%.2f", income));
         expenseLabel.setText(String.format("EXPENSE: ₱%.2f", expense));
     }
@@ -227,4 +275,6 @@ public class DashboardTab extends JPanel {
             }
         }
     }
+    
+    
 }
