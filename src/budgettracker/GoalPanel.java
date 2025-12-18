@@ -84,7 +84,7 @@ public class GoalPanel extends JPanel {
         JPanel actionRow = new JPanel(new BorderLayout());
         actionRow.setOpaque(false);
         actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        actionRow.setBorder(new EmptyBorder(5, 0, 5, 0));
+        actionRow.setBorder(new EmptyBorder(5, 0, 15, 0));
 
         messageLabel = new JLabel();
         messageLabel.setForeground(new Color(180, 255, 180));
