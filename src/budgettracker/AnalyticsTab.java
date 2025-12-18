@@ -90,7 +90,17 @@ public class AnalyticsTab extends JPanel {
 
         List<Transaction> all = (dashboardTab.getTransactions() != null)
                 ? dashboardTab.getTransactions() : new ArrayList<>();
+
+        // 1. If empty, clear everything and GTFO (Get The Funk Out)
         if (all.isEmpty()) {
+            tableModel.setRowCount(0);
+            summaryCard.setText("<html><body style='color:#00FF00; font-family:Monospaced; padding:15px;'>&gt; NO_DATA_FOUND</body></html>");
+
+            // Also clear the combo boxes so they don't hold "Ghost Years"
+            isUpdatingFilters = true;
+            monthFilter.removeAllItems();
+            yearFilter.removeAllItems();
+            isUpdatingFilters = false;
             return;
         }
 
