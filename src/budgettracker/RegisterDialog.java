@@ -126,17 +126,19 @@ public class RegisterDialog extends JDialog {
                     "Account created successfully! Logging you in...",
                     "Registration Success",
                     JOptionPane.INFORMATION_MESSAGE);
-            
+
             if (this.getParent() instanceof LoginDialog) {
                 LoginDialog login = (LoginDialog) this.getParent();
-
                 login.setExternalSuccess(true);
-                
                 this.dispose();
                 login.dispose();
             } else {
                 this.dispose();
             }
+        } else {
+            // FIX: Add this else block to handle the "Silent Failure"
+            // We proactively suggest checking the email specifically
+            showError("Registration failed. This email might already be in use.");
         }
     }
 
