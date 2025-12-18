@@ -325,6 +325,28 @@ public class DashboardTab extends JPanel {
             goalsTab.applyTransactionToGoals(t);
         }
     }
+    
+    
+    public double getCurrentTotalBalance() {
+        double totalIncome = 0;
+        double totalExpense = 0;
+
+        // Use 'this.transactions' to be explicit within the class
+        for (Transaction t : this.transactions) {
+            double amt = t.getAmount();
+            if (t.getType() == Transaction.Type.INCOME) {
+                totalIncome += amt;
+                // Your specific logic: Goal Refunds are technically 'returning' money, 
+                // but your updateTotals treats them as negative expenses.
+                if ("Goal Refund".equals(t.getCategory())) {
+                    totalExpense -= amt;
+                }
+            } else if (t.getType() == Transaction.Type.EXPENSE) {
+                totalExpense += amt;
+            }
+        }
+        return totalIncome - totalExpense;
+    }
 
     // --- BUTTON EDITOR/RENDERER ---
     private class ButtonRenderer extends JPanel implements TableCellRenderer {

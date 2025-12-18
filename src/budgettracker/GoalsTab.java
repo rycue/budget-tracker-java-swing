@@ -145,4 +145,8 @@ public class GoalsTab extends JPanel {
 
     public void recalculateAllGoals() {
     }
+    
+    public DashboardTab getDashboardTab() {
+        return this.dashboardTab;
+    }
 }

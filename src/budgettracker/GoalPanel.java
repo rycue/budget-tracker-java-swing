@@ -92,25 +92,43 @@ public class GoalPanel extends JPanel {
 
 
         addBtn.addActionListener(e -> {
-            // Get the top-level window to center the dialog properly
             Window parentWindow = SwingUtilities.getWindowAncestor(this);
+
+            // 1. Get the DashboardTab through the GoalsTab reference
+            // We need to find the GoalsTab that contains this panel
+            GoalsTab parentTab = (GoalsTab) SwingUtilities.getAncestorOfClass(GoalsTab.class, this);
+
+            if (parentTab == null) {
+                return;
+            }
+
+            // 2. Critical Check: How much cash do we actually have?
+            double cashOnHand = parentTab.getDashboardTab().getCurrentTotalBalance();
             double remainingNeeded = goal.getTarget() - goal.getProgress();
 
+            // 3. Informative Prompt
             String message = String.format(
                     "Goal: %s\n"
-                    + "Target: ₱%,.2f\n"
-                    + "Remaining: ₱%,.2f\n\n"
+                    + "Available Cash: ₱%,.2f\n"
+                    + "Remaining Needed: ₱%,.2f\n\n"
                     + "Enter amount to deposit:",
-                    goal.getName(), goal.getTarget(), remainingNeeded);
+                    goal.getName(), cashOnHand, remainingNeeded);
 
-            // Passing parentWindow here centers the dialog on the screen
             String input = JOptionPane.showInputDialog(parentWindow, message, "Deposit to Goal", JOptionPane.QUESTION_MESSAGE);
 
             if (input != null && !input.trim().isEmpty()) {
                 try {
                     double amount = Double.parseDouble(input.trim());
 
-                    // Validation: Cannot deposit more than what is needed
+                    // ENTERPRISE VALIDATION: Prevent Negative Balance
+                    if (amount > cashOnHand) {
+                        JOptionPane.showMessageDialog(parentWindow,
+                                String.format("Insufficient Funds!\nYou only have ₱%,.2f available in your balance.", cashOnHand),
+                                "Transaction Denied", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    // EXISTING VALIDATION: Prevent Over-funding
                     if (amount > remainingNeeded) {
                         JOptionPane.showMessageDialog(parentWindow,
                                 String.format("You only need ₱%,.2f to complete this goal.", remainingNeeded),
@@ -134,7 +152,6 @@ public class GoalPanel extends JPanel {
                 }
             }
         });
-        
 
         buttonPanel.add(removeBtn);
         buttonPanel.add(Box.createVerticalStrut(5));
