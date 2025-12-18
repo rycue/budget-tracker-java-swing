@@ -98,4 +98,33 @@ public class AccountManager {
             loggedInUser.setPassword(newPass);
         }
     }
+    
+    public static boolean resetUserPassword(int userID, String plainTextPassword) {
+        // 1. Hash the new password using your existing BCrypt utility
+        String newHash = PasswordHasher.hashPassword(plainTextPassword);
+
+        // 2. Update the Database
+        boolean success = SQLConnector.getInstance().updatePassword(userID, newHash);
+
+        // 3. Sync the local object so the app session has the new credentials
+        if (success && loggedInUser != null && loggedInUser.getUserID() == userID) {
+            loggedInUser.setPassword(newHash);
+        }
+
+        return success;
+    }
+    
+    public static boolean resetPasswordExternal(UserAccount user, String newPlainTextPassword) {
+        // 1. Hash the new password
+        String hashed = PasswordHasher.hashPassword(newPlainTextPassword);
+
+        // 2. Update Database
+        boolean success = SQLConnector.getInstance().updatePassword(user.getUserID(), hashed);
+
+        // 3. Sync local object (if this happens to be the logged in user)
+        if (success && loggedInUser != null && loggedInUser.getUserID() == user.getUserID()) {
+            loggedInUser.setPassword(hashed);
+        }
+        return success;
+    }
 }

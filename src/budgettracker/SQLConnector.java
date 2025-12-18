@@ -109,6 +109,46 @@ public class SQLConnector {
     } // end of getUserByID()
     
     
+    // Method specifically for the Forgot Password update
+    public boolean updatePassword(int userId, String hashedPass) {
+        String sql = "UPDATE users SET password = ? WHERE user_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, hashedPass);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("SQL Error (updatePassword): " + e.getMessage());
+            return false;
+        }
+    }
+    
+    
+
+    // BEST PRACTICE: Return a concrete Object, never a ResultSet
+    public UserAccount findUserByEmail(String email) {
+        String sql = "SELECT * FROM users WHERE email = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new UserAccount(
+                            rs.getInt("user_id"),
+                            rs.getString("full_name"),
+                            rs.getString("email"),
+                            rs.getString("password"),
+                            rs.getString("secret_question"),
+                            rs.getString("secret_answer")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Error (findUserByEmail): " + e.getMessage());
+        }
+        return null; // Return null if user doesn't exist
+    }
+
+    
     // ------------------------------------------------------------------
     public static void main(String[] args) {
         SQLConnector callConnect = new SQLConnector();

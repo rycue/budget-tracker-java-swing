@@ -398,17 +398,32 @@ public class AccountTab extends JPanel {
     
     
     private boolean performPasswordChange() {
-        // 1. Get New Password
-        String newPass = JOptionPane.showInputDialog(this, "Enter New Password:");
-        // If user clicks "Cancel" or closes the input, newPass is null. 
-        // Return false immediately so the dialog stays open and nothing else pops up.
-        if (newPass == null || newPass.trim().isEmpty()) {
+        // Create the masked fields
+        JPasswordField pf1 = new JPasswordField();
+        JPasswordField pf2 = new JPasswordField();
+
+        // Style them to match your dark theme (optional but recommended)
+        styleTextField(pf1);
+        styleTextField(pf2);
+
+        // Create a panel to hold the labels and fields
+        Object[] message = {
+            "New Password:", pf1,
+            "Confirm New Password:", pf2
+        };
+
+        // Show the dialog with the password fields
+        int option = JOptionPane.showConfirmDialog(this, message, "Change Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (option != JOptionPane.OK_OPTION) {
             return false;
         }
 
-        // 2. Confirm New Password
-        String confirmPass = JOptionPane.showInputDialog(this, "Confirm New Password:");
-        if (confirmPass == null) {
+        String newPass = new String(pf1.getPassword());
+        String confirmPass = new String(pf2.getPassword());
+
+        if (newPass.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Password cannot be empty!");
             return false;
         }
 

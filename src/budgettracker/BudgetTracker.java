@@ -193,6 +193,18 @@ public class BudgetTracker extends JFrame {
     }
     
     public static void main(String[] args) {
-        showLogin();
+        SplashScreen splash = new SplashScreen(3000);
+        splash.showSplash();
+
+        SwingUtilities.invokeLater(() -> {
+            LoginDialog login = new LoginDialog(null);
+            login.setVisible(true);
+
+            if (login.isSuccess()) {
+                new BudgetTracker().setVisible(true);
+            } else {
+                System.exit(0);
+            }
+        });
     }
 }
