@@ -2,8 +2,10 @@ package budgettracker;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class BudgetTracker extends JFrame {
+    private JButton editToggleBtn;
     private DashboardTab dashboardTab;
     private GoalsTab goalsTab;
     private AnalyticsTab analyticsTab;
@@ -50,42 +52,71 @@ public class BudgetTracker extends JFrame {
         
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         
-        dashboardBtn.addActionListener(e -> {
-            cardLayout.show(contentPanel, "Dashboard");
-            setActiveTab(dashboardBtn, goalsBtn, analyticsBtn, accountBtn);
-        });
-        
-        goalsBtn.addActionListener(e -> {
-            cardLayout.show(contentPanel, "Goals");
-            setActiveTab(goalsBtn, dashboardBtn, analyticsBtn, accountBtn);
-        });
-        
-        analyticsBtn.addActionListener(e -> {
-            cardLayout.show(contentPanel, "Analytics");
-            setActiveTab(analyticsBtn, dashboardBtn, goalsBtn, accountBtn);
-        });
-        
-        accountBtn.addActionListener(e -> {
-            cardLayout.show(contentPanel, "Account");
-            setActiveTab(accountBtn, dashboardBtn, goalsBtn, analyticsBtn);
-        });
-        
-        add(tabPanel, BorderLayout.NORTH);
-        add(contentPanel, BorderLayout.CENTER);
-        
-        // GLOBAL ADD TRANSACTION BUTTON
+        // --- ONE SINGLE BOTTOM PANEL (Enterprise Best Practice) ---
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        bottomPanel.setBackground(Color.BLACK);
+
+        // 1. Initialize Toggle Button once
+        editToggleBtn = new JButton("EDIT MODE: OFF");
+        styleSecondaryButton(editToggleBtn);
+        editToggleBtn.setVisible(true);
+
+        // 2. Initialize Add Button once
         JButton addTransactionBtn = new JButton("+");
         addTransactionBtn.setFont(new Font("Arial", Font.BOLD, 38));
         addTransactionBtn.setPreferredSize(new Dimension(64, 48));
-        addTransactionBtn.setToolTipText("Add Transaction");
         styleButton(addTransactionBtn);
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomPanel.setBackground(Color.BLACK);
+
+        // 3. Add to panel and then to frame
+        bottomPanel.add(editToggleBtn);
         bottomPanel.add(addTransactionBtn);
         add(bottomPanel, BorderLayout.SOUTH);
-        
+        add(tabPanel, BorderLayout.NORTH);     
+        add(contentPanel, BorderLayout.CENTER);
+
+        // --- ATTACH LISTENERS ONCE ---
         addTransactionBtn.addActionListener(e -> openTransactionDialog());
-        
+
+        editToggleBtn.addActionListener(e -> {
+            dashboardTab.toggleEditMode();
+            boolean active = editToggleBtn.getText().contains("OFF");
+            editToggleBtn.setText(active ? "EDIT MODE: ON" : "EDIT MODE: OFF");
+            editToggleBtn.setBackground(active ? Color.RED : Color.DARK_GRAY);
+            editToggleBtn.setForeground(active ? Color.WHITE : Color.GREEN);
+        });
+
+        // Dashboard Switcher
+        dashboardBtn.addActionListener(e -> {
+            cardLayout.show(contentPanel, "Dashboard");
+            setActiveTab(dashboardBtn, goalsBtn, analyticsBtn, accountBtn);
+            editToggleBtn.setVisible(true);
+        });
+
+        // Shared Switcher for other tabs to save space
+        ActionListener tabResetListener = e -> {
+            String cmd = e.getActionCommand(); // Make sure your buttons have ActionCommands set
+            cardLayout.show(contentPanel, cmd);
+
+            if (cmd.equals("Goals")) {
+                setActiveTab(goalsBtn, dashboardBtn, analyticsBtn, accountBtn);
+            } else if (cmd.equals("Analytics")) {
+                setActiveTab(analyticsBtn, dashboardBtn, goalsBtn, accountBtn);
+            } else if (cmd.equals("Account")) {
+                setActiveTab(accountBtn, dashboardBtn, goalsBtn, analyticsBtn);
+            }
+
+            resetEditMode();
+        };
+
+        // You MUST set these commands for the shared listener to work
+        goalsBtn.setActionCommand("Goals");
+        analyticsBtn.setActionCommand("Analytics");
+        accountBtn.setActionCommand("Account");
+
+        goalsBtn.addActionListener(tabResetListener);
+        analyticsBtn.addActionListener(tabResetListener);
+        accountBtn.addActionListener(tabResetListener);
+
         pack();
         setLocationRelativeTo(null);
         setMinimumSize(getSize());
@@ -118,6 +149,22 @@ public class BudgetTracker extends JFrame {
         button.setForeground(Color.BLACK);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+    }
+    
+    private void styleSecondaryButton(JButton btn) {
+        btn.setBackground(Color.DARK_GRAY);
+        btn.setForeground(Color.GREEN);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Arial", Font.BOLD, 12));
+        btn.setBorder(BorderFactory.createLineBorder(Color.GREEN, 1));
+    }
+    
+    private void resetEditMode() {
+        editToggleBtn.setVisible(false);
+        editToggleBtn.setText("EDIT MODE: OFF");
+        editToggleBtn.setBackground(Color.DARK_GRAY);
+        editToggleBtn.setForeground(Color.GREEN);
+        dashboardTab.forceDisableEditMode();
     }
     
     private JButton createTabButton(String text, boolean isActive) {
@@ -201,7 +248,16 @@ public class BudgetTracker extends JFrame {
             login.setVisible(true);
 
             if (login.isSuccess()) {
-                new BudgetTracker().setVisible(true);
+                BudgetTracker mainApp = new BudgetTracker();
+
+                mainApp.dashboardTab.loadFromDatabase();
+
+                String uid = AccountManager.getUserId();
+                if (uid != null) {
+                    mainApp.goalsTab.loadExistingGoals(Integer.parseInt(uid));
+                }
+
+                mainApp.setVisible(true);
             } else {
                 System.exit(0);
             }
