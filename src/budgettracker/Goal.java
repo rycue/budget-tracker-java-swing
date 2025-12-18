@@ -8,7 +8,7 @@ public class Goal {
     private double target;
     private double progress;
     private LocalDate dateCreated;
-    
+
     // Constructor for NEW goals (not in DB yet)
     public Goal(String name, double target) {
         this.name = name;
@@ -24,6 +24,10 @@ public class Goal {
         this.target = target;
         this.progress = progress;
         this.dateCreated = date;
+    }
+    
+    public LocalDate getDateCreated() {
+        return dateCreated;
     }
     
     public int getGoalID() {
@@ -46,9 +50,6 @@ public class Goal {
         return progress;
     }
 
-    public LocalDate getDateCreated() {
-        return dateCreated;
-    }
 
     // Add manual progress (from + button)
     public void addManualProgress(double amount) {
