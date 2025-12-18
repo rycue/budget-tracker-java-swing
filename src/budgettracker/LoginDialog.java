@@ -15,6 +15,10 @@ public class LoginDialog extends JDialog {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     );
+    
+    public void setExternalSuccess(boolean success) {
+        this.success = success;
+    }
 
     public LoginDialog(JFrame parent) {
         super(parent, "Login", true);
@@ -150,6 +154,8 @@ public class LoginDialog extends JDialog {
                 showError("Invalid email or password!");
             }
         });
+        
+        
 
         registerBtn.addActionListener(e -> new RegisterDialog(this).setVisible(true));
 
