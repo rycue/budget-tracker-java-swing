@@ -30,8 +30,7 @@ CREATE TABLE users (
     password VARBINARY(255) NOT NULL,
     secret_question VARCHAR(255),
     secret_answer VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    balance DECIMAL(10, 4) DEFAULT 0.0000
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- 4. Categories Table
