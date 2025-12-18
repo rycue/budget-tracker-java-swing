@@ -79,20 +79,42 @@ public class GoalsTab extends JPanel {
     }
 
     private void removeGoal(Goal goal, GoalPanel panel) {
-        // 1. Remove from Database
-        boolean success = DataHandler.deleteGoal(goal.getGoalID());
+        int userId = Integer.parseInt(AccountManager.getUserId());
 
-        if (success) {
-            // 2. If DB delete worked, remove from UI
-            goals.remove(goal);
-            goalPanels.remove(panel);
-            goalsContainer.remove(panel);
+        if (goal.getProgress() <= 0) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Delete empty goal: " + goal.getName() + "?",
+                    "Confirm Deletion", JOptionPane.YES_NO_OPTION);
 
-            // Refresh the UI container
-            goalsContainer.revalidate();
-            goalsContainer.repaint();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error: Could not delete goal from database.");
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (DataHandler.deleteGoal(goal.getGoalID(), userId, false, 0)) {
+                    refreshAll();
+                }
+            }
+            return; // Exit here
+        }
+
+        // Standard logic for goals WITH money
+        String[] options = {"Refund to Balance", "Permanent Delete", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(this,
+                "This goal has ₱" + String.format("%.2f", goal.getProgress()) + " saved. What should we do?",
+                "Delete Goal",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, options, options[0]);
+
+        if (choice == 0 || choice == 1) {
+            boolean refund = (choice == 0);
+            if (DataHandler.deleteGoal(goal.getGoalID(), userId, refund, goal.getProgress())) {
+                refreshAll();
+            }
+        }
+    }
+
+    private void refreshAll() {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof BudgetTracker) {
+            ((BudgetTracker) window).refreshAllTabs();
         }
     }
     
@@ -136,5 +158,9 @@ public class GoalsTab extends JPanel {
     }
 
     public void recalculateAllGoals() {
+    }
+    
+    public DashboardTab getDashboardTab() {
+        return this.dashboardTab;
     }
 }

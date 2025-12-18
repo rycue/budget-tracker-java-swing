@@ -34,6 +34,10 @@ public class UserAccount {
         this.securityAnswer = securityAnswer;
     }
     
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+    
     public int getUserID() {
         return userID;
     }

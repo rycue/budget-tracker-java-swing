@@ -215,6 +215,9 @@ public class AccountTab extends JPanel {
     }
 
     private void showEditProfileDialog() {
+        UserAccount user = AccountManager.getUser();
+        String originalName = user.getFullName(); // Store the current name to compare
+
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Profile", true);
         dialog.getContentPane().setBackground(Color.decode("#1b1b1b"));
 
@@ -223,32 +226,75 @@ public class AccountTab extends JPanel {
         content.setBackground(Color.decode("#1b1b1b"));
         content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        // 1. Full Name Field - PRE-FILLED
         JLabel nameLabel = new JLabel("Full Name:");
         styleLabel(nameLabel);
-        JTextField nameField = new JTextField(20);
-        nameField.setBackground(Color.decode("#2a2a2a"));
-        nameField.setForeground(Color.WHITE);
-        nameField.setCaretColor(Color.WHITE);
-        nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-        nameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JTextField nameField = new JTextField(originalName, 20); // Pre-fill with originalName
+        styleTextField(nameField);
 
+        // 2. Save Button - DISABLED BY DEFAULT
+        JButton saveBtn = new JButton("Save Changes");
+        styleActionButton(saveBtn);
+        saveBtn.setEnabled(false); // Start disabled
+
+        // 3. DocumentListener to detect changes
+        nameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void check() {
+                // Only enable if name is different from original AND not empty
+                String currentText = nameField.getText().trim();
+                saveBtn.setEnabled(!currentText.equals(originalName) && !currentText.isEmpty());
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                check();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                check();
+            }
+
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                check();
+            }
+        });
+        
+        // Inside showEditProfileDialog() ...
+// Step A: Clear any old listeners to prevent the "Double Popup"
+        for (java.awt.event.ActionListener al : changePasswordBtn.getActionListeners()) {
+            changePasswordBtn.removeActionListener(al);
+        }
+
+// Step B: Add the fresh listener for this specific dialog session
+        changePasswordBtn.addActionListener(e -> {
+            boolean success = performPasswordChange();
+            if (success) {
+                dialog.dispose(); // This closes the Edit Profile window
+            }
+        });
+
+
+        // 5. Save Button Logic
+        saveBtn.addActionListener(e -> {
+            String newName = nameField.getText().trim();
+            int userId = Integer.parseInt(AccountManager.getUserId());
+
+            if (DataHandler.updateUserName(userId, newName)) {
+                AccountManager.updateLocalUser(newName);
+                refresh();
+                JOptionPane.showMessageDialog(dialog, "Profile Updated!");
+                dialog.dispose();
+            }
+        });
+
+        // UI Assembly
         content.add(nameLabel);
         content.add(Box.createVerticalStrut(10));
         content.add(nameField);
         content.add(Box.createVerticalStrut(20));
-
-        JLabel secLabel = new JLabel("Security:");
-        styleLabel(secLabel);
-        content.add(secLabel);
+        content.add(new JLabel("Security:"));
         content.add(Box.createVerticalStrut(10));
-
-        changePasswordBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(changePasswordBtn);
-
         content.add(Box.createVerticalStrut(30));
-        JButton saveBtn = new JButton("Save Changes");
-        styleActionButton(saveBtn);
-        saveBtn.addActionListener(e -> dialog.dispose());
         content.add(saveBtn);
 
         dialog.add(content);
@@ -348,5 +394,63 @@ public class AccountTab extends JPanel {
             emailLbl.setText("Email: " + user.getEmail());
             createdLbl.setText("Account Created: " + user.getDateCreated());
         }
+    }
+    
+    
+    private boolean performPasswordChange() {
+        // Create the masked fields
+        JPasswordField pf1 = new JPasswordField();
+        JPasswordField pf2 = new JPasswordField();
+
+        // Style them to match your dark theme (optional but recommended)
+        styleTextField(pf1);
+        styleTextField(pf2);
+
+        // Create a panel to hold the labels and fields
+        Object[] message = {
+            "New Password:", pf1,
+            "Confirm New Password:", pf2
+        };
+
+        // Show the dialog with the password fields
+        int option = JOptionPane.showConfirmDialog(this, message, "Change Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (option != JOptionPane.OK_OPTION) {
+            return false;
+        }
+
+        String newPass = new String(pf1.getPassword());
+        String confirmPass = new String(pf2.getPassword());
+
+        if (newPass.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Password cannot be empty!");
+            return false;
+        }
+
+        if (!newPass.equals(confirmPass)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match!", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        // 3. Save
+        int userId = Integer.parseInt(AccountManager.getUserId());
+        if (DataHandler.updateUserPassword(userId, newPass)) {
+            AccountManager.updateLocalPassword(newPass);
+            refresh();
+            JOptionPane.showMessageDialog(this, "Password changed successfully!");
+            return true; // Success! This triggers the dialog.dispose()
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update password.");
+            return false;
+        }
+    }
+    
+    
+    private void styleTextField(JTextField field) {
+        field.setBackground(Color.decode("#2a2a2a"));
+        field.setForeground(Color.WHITE);
+        field.setCaretColor(Color.WHITE);
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        field.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
 }

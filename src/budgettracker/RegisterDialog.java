@@ -119,35 +119,26 @@ public class RegisterDialog extends JDialog {
                 secretAnswer
         );
 
-        // Call AccountManager and check the return value
         boolean registrationSuccessful = AccountManager.register(user);
 
         if (registrationSuccessful) {
             JOptionPane.showMessageDialog(this,
-                    "Account created successfully and logged in!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+                    "Account created successfully! Logging you in...",
+                    "Registration Success",
+                    JOptionPane.INFORMATION_MESSAGE);
 
-            // Assuming the parent window is the login/main entry screen,
-            // we close this dialog and might signal the parent to update or open the main app.
-            // For now, we just dispose the dialog.
-            this.dispose();
-
-            // If this dialog was launched from a main login frame, you would
-            // likely open the main application frame here:
-            // new MainApplicationFrame().setVisible(true);
+            if (this.getParent() instanceof LoginDialog) {
+                LoginDialog login = (LoginDialog) this.getParent();
+                login.setExternalSuccess(true);
+                this.dispose();
+                login.dispose();
+            } else {
+                this.dispose();
+            }
         } else {
-            // FAILURE
-            // The AccountManager failed, likely due to a duplicate email or DB error.
-            System.err.println("Registration attempt failed.");
-            String errorMessage = "Registration failed. The email may already be in use, or there was a database error.";
-
-            JOptionPane.showMessageDialog(this,
-                    errorMessage,
-                    "Registration Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            // FIX: Add this else block to handle the "Silent Failure"
+            // We proactively suggest checking the email specifically
+            showError("Registration failed. This email might already be in use.");
         }
     }
 

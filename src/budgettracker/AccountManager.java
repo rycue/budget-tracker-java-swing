@@ -15,7 +15,6 @@ public class AccountManager {
         String secretQuestion = user.getSecurityQuestion();
         String secretAnswer = user.getSecurityAnswer();
         LocalDateTime registrationTime = LocalDateTime.now();
-        BigDecimal startingBalance = new BigDecimal(0.00);
         
         boolean registrationSuccess = DataHandler.registerAccount(
                 email,
@@ -23,8 +22,7 @@ public class AccountManager {
                 plainTextPassword,
                 secretQuestion,
                 secretAnswer,
-                registrationTime,
-                startingBalance
+                registrationTime
         );
         
         if (registrationSuccess) {
@@ -84,5 +82,47 @@ public class AccountManager {
     public static String getUserId() {
         // Check if loggedInUser is not null, then get its ID
         return (loggedInUser != null) ? String.valueOf(loggedInUser.getUserID()) : null;
+    }
+    
+    // FOR ACCOUNT SETTINGS
+    public static void updateLocalUser(String newName) {
+        if (loggedInUser != null) {
+            loggedInUser.setFullName(newName);
+        }
+    }
+
+    public static void updateLocalPassword(String newPass) {
+        if (loggedInUser != null) {
+            loggedInUser.setPassword(newPass);
+        }
+    }
+    
+    public static boolean resetUserPassword(int userID, String plainTextPassword) {
+        // 1. Hash the new password using your existing BCrypt utility
+        String newHash = PasswordHasher.hashPassword(plainTextPassword);
+
+        // 2. Update the Database
+        boolean success = SQLConnector.getInstance().updatePassword(userID, newHash);
+
+        // 3. Sync the local object so the app session has the new credentials
+        if (success && loggedInUser != null && loggedInUser.getUserID() == userID) {
+            loggedInUser.setPassword(newHash);
+        }
+
+        return success;
+    }
+    
+    public static boolean resetPasswordExternal(UserAccount user, String newPlainTextPassword) {
+        // 1. Hash the new password
+        String hashed = PasswordHasher.hashPassword(newPlainTextPassword);
+
+        // 2. Update Database
+        boolean success = SQLConnector.getInstance().updatePassword(user.getUserID(), hashed);
+
+        // 3. Sync local object (if this happens to be the logged in user)
+        if (success && loggedInUser != null && loggedInUser.getUserID() == user.getUserID()) {
+            loggedInUser.setPassword(hashed);
+        }
+        return success;
     }
 }
