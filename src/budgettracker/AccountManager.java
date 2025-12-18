@@ -15,7 +15,6 @@ public class AccountManager {
         String secretQuestion = user.getSecurityQuestion();
         String secretAnswer = user.getSecurityAnswer();
         LocalDateTime registrationTime = LocalDateTime.now();
-        BigDecimal startingBalance = new BigDecimal(0.00);
         
         boolean registrationSuccess = DataHandler.registerAccount(
                 email,
@@ -23,8 +22,7 @@ public class AccountManager {
                 plainTextPassword,
                 secretQuestion,
                 secretAnswer,
-                registrationTime,
-                startingBalance
+                registrationTime
         );
         
         if (registrationSuccess) {

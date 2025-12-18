@@ -59,48 +59,51 @@ public class AnalyticsTab extends JPanel {
     }
 
     public void updateTable() {
-        tableModel.setRowCount(0); 
-
+        tableModel.setRowCount(0);
         List<Transaction> all = dashboardTab.getTransactions();
+        if (all == null) {
+            return;
+        }
 
         String monthSelected = (String) monthFilter.getSelectedItem();
         String yearSelected = (String) yearFilter.getSelectedItem();
 
+        // 1. Filtered list for the table
         List<Transaction> filtered = all.stream().filter(t -> {
-            boolean monthMatch = monthSelected.equals("All Months") || 
-                                 t.getDate().getMonth().toString().equals(monthSelected);
-            boolean yearMatch = yearSelected.equals("All Years") || 
-                                String.valueOf(t.getDate().getYear()).equals(yearSelected);
+            boolean monthMatch = monthSelected.equals("All Months")
+                    || t.getDate().getMonth().toString().equals(monthSelected);
+            boolean yearMatch = yearSelected.equals("All Years")
+                    || String.valueOf(t.getDate().getYear()).equals(yearSelected);
             return monthMatch && yearMatch;
-        }).collect(Collectors.toList());
+        }).sorted((t1, t2) -> t1.getDate().compareTo(t2.getDate()))
+                .collect(Collectors.toList());
 
-        // Sort by date
-        filtered.sort((t1, t2) -> t1.getDate().compareTo(t2.getDate()));
-
+        // 2. CRITICAL: Calculate Starting Balance (Transactions BEFORE the filtered range)
+        // This prevents the balance from "resetting" to 0 every time you filter.
         double runningBalance = 0.0;
+        if (!filtered.isEmpty()) {
+            LocalDate firstDisplayedDate = filtered.get(0).getDate();
+            runningBalance = all.stream()
+                    .filter(t -> t.getDate().isBefore(firstDisplayedDate))
+                    .mapToDouble(t -> t.getType() == Transaction.Type.INCOME ? t.getAmount() : -t.getAmount())
+                    .sum();
+        }
+
+        // 3. Populate the table
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
         for (Transaction t : filtered) {
-            double amount = t.getAmount();
-            String amountStr;
-            String result;
-
             if (t.getType() == Transaction.Type.INCOME) {
-                runningBalance += amount;
-                amountStr = String.format("+₱%.2f", amount);
-                result = "Income";
+                runningBalance += t.getAmount();
             } else {
-                runningBalance -= amount;
-                amountStr = String.format("-₱%.2f", amount);
-                result = "Expense";
+                runningBalance -= t.getAmount();
             }
 
             tableModel.addRow(new Object[]{
-                    t.getDate().format(df),
-                    t.getCategory(),
-                    amountStr,
-                    String.format("₱%.2f", runningBalance),
-                    result
+                t.getDate().format(df),
+                t.getCategory(),
+                (t.getType() == Transaction.Type.INCOME ? "+₱" : "-₱") + String.format("%.2f", t.getAmount()),
+                String.format("₱%.2f", runningBalance),
+                t.getType()
             });
         }
     }

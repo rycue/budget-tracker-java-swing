@@ -49,11 +49,10 @@ public class SQLConnector {
             String hashedPassword,
             String secretQuestion,
             String secretAnswer,
-            java.time.LocalDateTime createdAt,
-            java.math.BigDecimal balance
+            java.time.LocalDateTime createdAt
     ) {
-        String sql = "INSERT INTO users (full_name, email, password, secret_question, secret_answer, created_at, balance) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (full_name, email, password, secret_question, secret_answer, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
         
         try (Connection connection = getConnection(); PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, fullName);
@@ -63,7 +62,6 @@ public class SQLConnector {
             ps.setString(5, secretAnswer);
             Timestamp dbTimestamp = Timestamp.valueOf(createdAt);
             ps.setTimestamp(6, dbTimestamp);
-            ps.setBigDecimal(7, balance);
             
             // If rowsAffected is 1, the insertion was successful
             int rowAffected = ps.executeUpdate();
@@ -75,38 +73,32 @@ public class SQLConnector {
     }
     
     public ResultSet getUserByEmail(String email) {
-        String sql = "SELECT user_id, email, password, secret_question, secret_answer, balance FROM users WHERE email = ?";
-        
+        String sql = "SELECT user_id, email, password, secret_question, secret_answer FROM users WHERE email = ?";
+
         try {
             Connection connection = getConnection();
             PreparedStatement ps = connection.prepareStatement(sql);
-            
             ps.setString(1, email);
-            
             return ps.executeQuery();
         } catch (SQLException e) {
             System.err.println("SQLConnector Error - Failed to fetch user by email: " + e.getMessage());
             return null;
         }
     }
-    
+
     public ResultSet getUserByID(String userID) {
-        String sql = "SELECT user_id, full_name, email, password, secret_question, secret_answer, balance FROM users WHERE user_id = ?";
+        String sql = "SELECT user_id, full_name, email, password, secret_question, secret_answer FROM users WHERE user_id = ?";
 
         try {
             java.sql.Connection connection = getConnection();
             java.sql.PreparedStatement ps = connection.prepareStatement(sql);
-
-            // Since we are passing the ID as a String from DataHandler, use setString
             ps.setString(1, userID);
-
             return ps.executeQuery();
-
         } catch (java.sql.SQLException e) {
             System.err.println("SQLConnector Error - Failed to fetch user by ID: " + e.getMessage());
             return null;
         }
-    } // end of getUserByID()
+    }
     
     
     // Method specifically for the Forgot Password update

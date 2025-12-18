@@ -9,28 +9,29 @@ import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.YearMonth;
+import java.util.stream.Collectors;
 
 public class DashboardTab extends JPanel {
 
-    private JLabel balanceLabel;
+    private JLabel totalBalanceLabel;
+    private JLabel savingsLabel;
     private JLabel incomeLabel;
     private JLabel expenseLabel;
     private JTable transactionTable;
-    private DefaultTableModel tableModel;   
+    private DefaultTableModel tableModel;
     private List<Transaction> transactions;
     private AnalyticsTab analyticsTab;
     private GoalsTab goalsTab;
 
-    public DashboardTab() {  
+    public DashboardTab() {
         transactions = new ArrayList<>();
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.BLACK);
 
         // TOP PANEL
-        // --- TOP PANEL REFACTOR ---
         JPanel topPanel = new JPanel(new GridBagLayout());
         topPanel.setBackground(Color.BLACK);
-// CRITICAL: Add padding so text doesn't touch the window edges
         topPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -38,80 +39,79 @@ public class DashboardTab extends JPanel {
         gbc.weightx = 1.0;
         gbc.gridx = 0;
 
-// 1. Primary Stat: Monthly Savings
-// We use a larger font and center it to create a clear focal point
-        balanceLabel = createLabel("MONTHLY SAVINGS: ₱0.00", 28);
-        balanceLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 15, 0); // Bottom margin to separate from sub-stats
-        topPanel.add(balanceLabel, gbc);
+        // Container for Balance and Savings
+        JPanel mainStatsPanel = new JPanel(new GridLayout(2, 1, 0, 5));
+        mainStatsPanel.setBackground(Color.BLACK);
 
-// 2. Sub-stats Container (Income & Expense)
-// Using a 1x2 Grid with horizontal gaps for breathing room
+        totalBalanceLabel = createLabel("TOTAL BALANCE: ₱0.00", 32);
+        totalBalanceLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        mainStatsPanel.add(totalBalanceLabel);
+
+        savingsLabel = createLabel("MONTHLY SAVINGS: ₱0.00", 22);
+        savingsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        mainStatsPanel.add(savingsLabel);
+
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 15, 0);
+        topPanel.add(mainStatsPanel, gbc);
+
+        // Sub-stats (Income & Expense)
         JPanel iePanel = new JPanel(new GridLayout(1, 2, 30, 0));
         iePanel.setBackground(Color.BLACK);
 
-// Use specific color coding: Green for Income, Red-Orange for Expense
         incomeLabel = createLabel("INCOME: ₱0.00", 18);
-        incomeLabel.setForeground(new Color(50, 205, 50)); // Lime Green
+        incomeLabel.setForeground(new Color(50, 205, 50));
         incomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         expenseLabel = createLabel("EXPENSE: ₱0.00", 18);
-        expenseLabel.setForeground(new Color(255, 69, 0)); // Red-Orange
+        expenseLabel.setForeground(new Color(255, 69, 0));
         expenseLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         iePanel.add(incomeLabel);
         iePanel.add(expenseLabel);
 
         gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 0, 0); // Reset margins
+        gbc.insets = new Insets(0, 0, 0, 0);
         topPanel.add(iePanel, gbc);
 
         add(topPanel, BorderLayout.NORTH);
 
-        // HISTORY PANEL WITH BORDER
+        // HISTORY PANEL
         JPanel historyPanel = new JPanel(new BorderLayout());
         historyPanel.setBackground(Color.BLACK);
         historyPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.GREEN, 2),
-                "History",
+                "Monthly History",
                 TitledBorder.CENTER,
                 TitledBorder.TOP,
                 new Font("Arial", Font.BOLD, 16),
                 Color.GREEN
         ));
 
-        // TABLE
         String[] columns = {"Date", "Type", "Category", "Note", "Amount", "Remove"};
         tableModel = new DefaultTableModel(columns, 0) {
+            @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 5; // Only the button column editable
+                return column == 5;
             }
         };
 
         transactionTable = new JTable(tableModel);
         transactionTable.setRowHeight(30);
-
-        // Button renderer/editor
-        transactionTable.getColumn("Remove").setCellRenderer(new ButtonRenderer());
-        transactionTable.getColumn("Remove").setCellEditor(new ButtonEditor());
-
-        historyPanel.add(new JScrollPane(transactionTable), BorderLayout.CENTER);
-
-        add(historyPanel, BorderLayout.CENTER);
-        // Dark Mode Table Styling
         transactionTable.setBackground(Color.BLACK);
         transactionTable.setForeground(Color.GREEN);
         transactionTable.setGridColor(Color.DARK_GRAY);
         transactionTable.getTableHeader().setBackground(Color.DARK_GRAY);
         transactionTable.getTableHeader().setForeground(Color.WHITE);
 
-// Ensure the scroll pane matches
+        transactionTable.getColumn("Remove").setCellRenderer(new ButtonRenderer());
+        transactionTable.getColumn("Remove").setCellEditor(new ButtonEditor());
+
         JScrollPane scrollPane = new JScrollPane(transactionTable);
         scrollPane.getViewport().setBackground(Color.BLACK);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         historyPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
+        add(historyPanel, BorderLayout.CENTER);
     }
 
     private JLabel createLabel(String text, int fontSize) {
@@ -120,16 +120,9 @@ public class DashboardTab extends JPanel {
         lbl.setFont(new Font("SansSerif", Font.BOLD, fontSize));
         return lbl;
     }
-    
-    
-
-    public void setGoalsTab(GoalsTab goalsTab) {
-        this.goalsTab = goalsTab;
-    }
 
     public void addTransactionFromOutside(Transaction t) {
-        loadFromDatabase();
-
+        loadFromDatabase(); // Refresh everything from DB
         if (goalsTab != null) {
             goalsTab.applyTransactionToGoals(t);
         }
@@ -138,13 +131,10 @@ public class DashboardTab extends JPanel {
     private void refreshAll() {
         tableModel.setRowCount(0);
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        // Get the current month for filtering
-        java.time.YearMonth currentMonth = java.time.YearMonth.now();
+        YearMonth currentMonth = YearMonth.now();
 
         for (Transaction t : transactions) {
-            // ONLY add to the table if it belongs to the current month
-            if (java.time.YearMonth.from(t.getDate()).equals(currentMonth)) {
+            if (YearMonth.from(t.getDate()).equals(currentMonth)) {
                 tableModel.addRow(new Object[]{
                     t.getDate().format(df),
                     t.getType(),
@@ -155,126 +145,119 @@ public class DashboardTab extends JPanel {
                 });
             }
         }
-
-        // This now calculates totals based on the same logic
         updateTotals();
-
         if (analyticsTab != null) {
             analyticsTab.updateTable();
         }
     }
 
     private void updateTotals() {
-        java.time.YearMonth currentMonth = java.time.YearMonth.now();
+        YearMonth currentMonth = YearMonth.now();
 
-        // Calculate Monthly Income
-        double income = transactions.stream()
+        double monthlyIncome = transactions.stream()
                 .filter(t -> t.getType() == Transaction.Type.INCOME)
-                // CRITICAL: Filter for current month and year only
-                .filter(t -> java.time.YearMonth.from(t.getDate()).equals(currentMonth))
-                .mapToDouble(Transaction::getAmount)
-                .sum();
+                .filter(t -> YearMonth.from(t.getDate()).equals(currentMonth))
+                .mapToDouble(Transaction::getAmount).sum();
 
-        // Calculate Monthly Expense
-        double expense = transactions.stream()
+        double monthlyExpense = transactions.stream()
                 .filter(t -> t.getType() == Transaction.Type.EXPENSE)
-                // CRITICAL: Filter for current month and year only
-                .filter(t -> java.time.YearMonth.from(t.getDate()).equals(currentMonth))
-                .mapToDouble(Transaction::getAmount)
-                .sum();
+                .filter(t -> YearMonth.from(t.getDate()).equals(currentMonth))
+                .mapToDouble(Transaction::getAmount).sum();
 
-        double monthlySavings = income - expense;
+        double totalIncome = transactions.stream()
+                .filter(t -> t.getType() == Transaction.Type.INCOME)
+                .mapToDouble(Transaction::getAmount).sum();
 
-        balanceLabel.setText(String.format("MONTHLY SAVINGS: ₱%.2f", monthlySavings));
-        incomeLabel.setText(String.format("INCOME: ₱%.2f", income));
-        expenseLabel.setText(String.format("EXPENSE: ₱%.2f", expense));
+        double totalExpense = transactions.stream()
+                .filter(t -> t.getType() == Transaction.Type.EXPENSE)
+                .mapToDouble(Transaction::getAmount).sum();
+
+        updateUI(totalIncome - totalExpense, monthlyIncome - monthlyExpense, monthlyIncome, monthlyExpense);
     }
 
-    public List<Transaction> getTransactions() {
-        return transactions;
+    private void updateUI(double balance, double savings, double inc, double exp) {
+        totalBalanceLabel.setText(String.format("TOTAL BALANCE: ₱%.2f", balance));
+        savingsLabel.setText(String.format("MONTHLY SAVINGS: ₱%.2f", savings));
+        incomeLabel.setText(String.format("INCOME: ₱%.2f", inc));
+        expenseLabel.setText(String.format("EXPENSE: ₱%.2f", exp));
+
+        totalBalanceLabel.setForeground(balance < 0 ? Color.RED : new Color(0, 180, 0));
+        savingsLabel.setForeground(savings < 0 ? Color.ORANGE : Color.CYAN);
     }
 
-    public void setAnalyticsTab(AnalyticsTab analyticsTab) {
-        this.analyticsTab = analyticsTab;
-    }
-
+    // --- INNER CLASSES FOR TABLE BUTTONS ---
     private class ButtonRenderer extends JButton implements TableCellRenderer {
+
         public ButtonRenderer() {
             setText("-");
-            setFont(new Font("Arial", Font.BOLD, 20));
             setBackground(Color.RED);
             setForeground(Color.WHITE);
+            setBorderPainted(false);
         }
 
-        public Component getTableCellRendererComponent(
-                JTable table, Object value, boolean isSelected,
-                boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             return this;
         }
+    }
+    
+    public List<Transaction> getTransactions() {
+        return transactions;
     }
 
     private class ButtonEditor extends AbstractCellEditor implements TableCellEditor {
 
         private JButton button;
-        private int row;
+        private int currentRow;
 
         public ButtonEditor() {
             button = new JButton("-");
-            button.setFont(new Font("Arial", Font.BOLD, 20));
             button.setBackground(Color.RED);
             button.setForeground(Color.WHITE);
-
             button.addActionListener(e -> {
-                // 1. Get the transaction object from the list using the row index
-                Transaction t = transactions.get(row);
+                // Precision filtering: get ONLY this month's transactions to match table rows
+                List<Transaction> thisMonth = transactions.stream()
+                        .filter(t -> YearMonth.from(t.getDate()).equals(YearMonth.now()))
+                        .collect(Collectors.toList());
 
-                // 2. Call the DataHandler to delete it from MySQL
-                // (Ensure you added the deleteTransaction method to DataHandler first!)
-                boolean deletedFromDb = DataHandler.deleteTransaction(t.getTransactionId());
-
-                if (deletedFromDb) {
-                    // 3. Only remove from the UI list if the DB delete was successful
-                    transactions.remove(row);
-                    refreshAll();
-
-                    if (goalsTab != null) {
-                        goalsTab.recalculateAllGoals();
+                if (currentRow < thisMonth.size()) {
+                    Transaction t = thisMonth.get(currentRow);
+                    if (DataHandler.deleteTransaction(t.getTransactionId())) {
+                        transactions.remove(t);
+                        fireEditingStopped();
+                        refreshAll();
+                        if (goalsTab != null) {
+                            goalsTab.recalculateAllGoals();
+                        }
                     }
-                } else {
-                    JOptionPane.showMessageDialog(this.button,
-                            "Error: Could not delete from database. Check if Transaction ID is valid.",
-                            "Delete Error", JOptionPane.ERROR_MESSAGE);
                 }
-
-                fireEditingStopped();
             });
         }
 
-        public Component getTableCellEditorComponent(
-                JTable table, Object value, boolean isSelected,
-                int row, int col) {
-            this.row = row;
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int col) {
+            this.currentRow = row;
             return button;
         }
 
+        @Override
         public Object getCellEditorValue() {
             return "-";
         }
     }
-    
-    public void loadFromDatabase() {
-        String userIdStr = AccountManager.getUserId();
 
-        if (userIdStr != null) {
-            try {
-                int userId = Integer.parseInt(userIdStr);
-                this.transactions = DataHandler.loadTransactions(userId);
-                refreshAll();
-            } catch (NumberFormatException e) {
-                System.err.println("Invalid User ID format");
-            }
+    public void loadFromDatabase() {
+        String id = AccountManager.getUserId();
+        if (id != null) {
+            this.transactions = DataHandler.loadTransactions(Integer.parseInt(id));
+            refreshAll();
         }
     }
-    
-    
+
+    public void setGoalsTab(GoalsTab g) {
+        this.goalsTab = g;
+    }
+
+    public void setAnalyticsTab(AnalyticsTab a) {
+        this.analyticsTab = a;
+    }
 }

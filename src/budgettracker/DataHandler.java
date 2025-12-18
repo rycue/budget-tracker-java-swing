@@ -19,8 +19,7 @@ public class DataHandler {
                                     String password,
                                     String secretQuestion,
                                     String secretAnswer,
-                                    LocalDateTime createdAt,
-                                    java.math.BigDecimal balance) {
+                                    LocalDateTime createdAt) {
         System.out.println("RAM: New account created at " + createdAt);
         
         if (email == null || password == null || secretAnswer == null) {
@@ -41,8 +40,7 @@ public class DataHandler {
                     hashedPassword,
                     secretQuestion,
                     secretAnswer,
-                    createdAt,
-                    balance
+                    createdAt
             );
 
             if (success) {
@@ -184,14 +182,11 @@ public class DataHandler {
     public static boolean saveToDatabase(Transaction t, int userId) {
         String sql = "INSERT INTO transactions (user_id, category_id, amount, note, created_at) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setInt(1, userId);
-            // Pass the transaction type so the helper can create the category if it's missing
             ps.setInt(2, getCategoryIdByName(t.getCategory(), userId, t.getType()));
             ps.setDouble(3, t.getAmount());
             ps.setString(4, t.getNote());
             ps.setTimestamp(5, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
-
             return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             System.err.println("DB Save Error: " + e.getMessage());
@@ -462,13 +457,6 @@ public class DataHandler {
 
             String delCategories = "DELETE FROM categories WHERE user_id = ?";
             try (PreparedStatement ps = conn.prepareStatement(delCategories)) {
-                ps.setInt(1, userId);
-                ps.executeUpdate();
-            }
-
-            // 2. Optional: Reset user balance to 0 in the users table
-            String resetBalance = "UPDATE users SET balance = 0 WHERE user_id = ?";
-            try (PreparedStatement ps = conn.prepareStatement(resetBalance)) {
                 ps.setInt(1, userId);
                 ps.executeUpdate();
             }
