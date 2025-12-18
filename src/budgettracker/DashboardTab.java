@@ -128,7 +128,7 @@ public class DashboardTab extends JPanel {
         transactionTable.setDefaultRenderer(Object.class, new TransactionRenderer());
 
         transactionTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-        transactionTable.getColumnModel().getColumn(1).setPreferredWidth(120);
+        transactionTable.getColumnModel().getColumn(1).setPreferredWidth(140);
         transactionTable.getColumnModel().getColumn(2).setPreferredWidth(320);
         transactionTable.getColumnModel().getColumn(3).setPreferredWidth(120);
 
@@ -327,50 +327,89 @@ public class DashboardTab extends JPanel {
     }
 
     // --- BUTTON EDITOR/RENDERER ---
-    private class ButtonRenderer extends JButton implements TableCellRenderer {
+    private class ButtonRenderer extends JPanel implements TableCellRenderer {
+
+        private JButton button;
 
         public ButtonRenderer() {
-            setText("-");
-            setBackground(Color.RED);
-            setForeground(Color.WHITE);
-            setBorderPainted(false);
+            setLayout(new BorderLayout());
+            setBackground(Color.BLACK);
+            button = new JButton("-");
+            button.setBackground(Color.RED);
+            button.setForeground(Color.WHITE);
+            button.setBorderPainted(false);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            removeAll(); // Clear previous state
+
+            // Get the transaction for the current row
+            List<Transaction> thisMonth = transactions.stream()
+                    .filter(t -> YearMonth.from(t.getDate()).equals(YearMonth.now()))
+                    .collect(Collectors.toList());
+
+            if (row < thisMonth.size()) {
+                Transaction t = thisMonth.get(row);
+                // Hide button for Goal Savings and Goal Refunds
+                if ("Goal Savings".equals(t.getCategory()) || "Goal Refund".equals(t.getCategory())) {
+                    return this; // Return empty panel
+                }
+            }
+
+            add(button);
             return this;
         }
     }
 
     private class ButtonEditor extends AbstractCellEditor implements TableCellEditor {
 
+        private JPanel panel;
         private JButton button;
         private int currentRow;
 
         public ButtonEditor() {
+            panel = new JPanel(new BorderLayout());
+            panel.setBackground(Color.BLACK);
             button = new JButton("-");
             button.setBackground(Color.RED);
             button.setForeground(Color.WHITE);
+
             button.addActionListener(e -> {
-                List<Transaction> thisMonth = transactions.stream().filter(t -> YearMonth.from(t.getDate()).equals(YearMonth.now())).collect(Collectors.toList());
+                List<Transaction> thisMonth = transactions.stream()
+                        .filter(t -> YearMonth.from(t.getDate()).equals(YearMonth.now()))
+                        .collect(Collectors.toList());
+
                 if (currentRow < thisMonth.size()) {
                     Transaction t = thisMonth.get(currentRow);
                     if (DataHandler.deleteTransaction(t.getTransactionId())) {
                         transactions.remove(t);
                         fireEditingStopped();
                         refreshAll();
-                        if (goalsTab != null) {
-                            goalsTab.recalculateAllGoals();
-                        }
                     }
                 }
             });
         }
 
         @Override
-        public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) {
-            this.currentRow = r;
-            return button;
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            this.currentRow = row;
+            panel.removeAll();
+
+            List<Transaction> thisMonth = transactions.stream()
+                    .filter(t -> YearMonth.from(t.getDate()).equals(YearMonth.now()))
+                    .collect(Collectors.toList());
+
+            if (row < thisMonth.size()) {
+                Transaction t = thisMonth.get(row);
+                // Block clicking/editing for Goal items
+                if ("Goal Savings".equals(t.getCategory()) || "Goal Refund".equals(t.getCategory())) {
+                    return panel;
+                }
+            }
+
+            panel.add(button);
+            return panel;
         }
 
         @Override
@@ -378,4 +417,5 @@ public class DashboardTab extends JPanel {
             return "-";
         }
     }
+    
 }
