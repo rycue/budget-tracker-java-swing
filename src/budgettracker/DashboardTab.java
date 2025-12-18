@@ -253,11 +253,37 @@ public class DashboardTab extends JPanel {
 
     private void updateTotals() {
         YearMonth currentMonth = YearMonth.now();
-        double monthlyIncome = transactions.stream().filter(t -> t.getType() == Transaction.Type.INCOME && YearMonth.from(t.getDate()).equals(currentMonth)).mapToDouble(Transaction::getAmount).sum();
-        double monthlyExpense = transactions.stream().filter(t -> t.getType() == Transaction.Type.EXPENSE && YearMonth.from(t.getDate()).equals(currentMonth)).mapToDouble(Transaction::getAmount).sum();
-        double totalIncome = transactions.stream().filter(t -> t.getType() == Transaction.Type.INCOME).mapToDouble(Transaction::getAmount).sum();
-        double totalExpense = transactions.stream().filter(t -> t.getType() == Transaction.Type.EXPENSE).mapToDouble(Transaction::getAmount).sum();
-        updateUI(totalIncome - totalExpense, monthlyIncome - monthlyExpense, monthlyIncome, monthlyExpense);
+
+        double mIncome = 0;
+        double mExpense = 0;
+        double tIncome = 0;
+        double tExpense = 0;
+
+        for (Transaction t : transactions) {
+            boolean isThisMonth = YearMonth.from(t.getDate()).equals(currentMonth);
+            double amt = t.getAmount();
+
+            if (t.getType() == Transaction.Type.INCOME) {
+                tIncome += amt;
+                if (isThisMonth) {
+                    mIncome += amt;
+                }
+
+                if ("Goal Refund".equals(t.getCategory())) {
+                    tExpense -= amt;
+                    if (isThisMonth) {
+                        mExpense -= amt;
+                    }
+                }
+            } else if (t.getType() == Transaction.Type.EXPENSE) {
+                tExpense += amt;
+                if (isThisMonth) {
+                    mExpense += amt;
+                }
+            }
+        }
+
+        updateUI(tIncome - tExpense, mIncome - mExpense, mIncome, mExpense);
     }
 
     private void updateUI(double balance, double savings, double inc, double exp) {

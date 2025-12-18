@@ -90,32 +90,51 @@ public class GoalPanel extends JPanel {
         addBtn.setBorder(BorderFactory.createLineBorder(Color.decode("#00AA00"), 2));
         addBtn.setToolTipText("Add to Goal");
 
+
         addBtn.addActionListener(e -> {
-            String input = JOptionPane.showInputDialog(this, "Amount to deposit into \"" + goal.getName() + "\":");
+            // Get the top-level window to center the dialog properly
+            Window parentWindow = SwingUtilities.getWindowAncestor(this);
+            double remainingNeeded = goal.getTarget() - goal.getProgress();
+
+            String message = String.format(
+                    "Goal: %s\n"
+                    + "Target: ₱%,.2f\n"
+                    + "Remaining: ₱%,.2f\n\n"
+                    + "Enter amount to deposit:",
+                    goal.getName(), goal.getTarget(), remainingNeeded);
+
+            // Passing parentWindow here centers the dialog on the screen
+            String input = JOptionPane.showInputDialog(parentWindow, message, "Deposit to Goal", JOptionPane.QUESTION_MESSAGE);
 
             if (input != null && !input.trim().isEmpty()) {
                 try {
                     double amount = Double.parseDouble(input.trim());
-                    // ... (keep your existing validation logic here) ...
+
+                    // Validation: Cannot deposit more than what is needed
+                    if (amount > remainingNeeded) {
+                        JOptionPane.showMessageDialog(parentWindow,
+                                String.format("You only need ₱%,.2f to complete this goal.", remainingNeeded),
+                                "Limit Exceeded", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    if (amount <= 0) {
+                        JOptionPane.showMessageDialog(parentWindow, "Please enter a positive amount.");
+                        return;
+                    }
 
                     int userId = Integer.parseInt(AccountManager.getUserId());
-
-                    // Trigger the double-action (Update Goal + Create Expense)
-                    boolean success = DataHandler.fundGoal(userId, goal.getGoalID(), amount, goal.getName());
-
-                    if (success) {
-                        // Precision Fix: Find the top-level app and refresh EVERYTHING
-                        Window window = SwingUtilities.getWindowAncestor(this);
-                        if (window instanceof BudgetTracker) {
-                            ((BudgetTracker) window).refreshAllTabs();
+                    if (DataHandler.fundGoal(userId, goal.getGoalID(), amount, goal.getName())) {
+                        if (parentWindow instanceof BudgetTracker) {
+                            ((BudgetTracker) parentWindow).refreshAllTabs();
                         }
-                        JOptionPane.showMessageDialog(this, "Successfully saved ₱" + amount);
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Please enter a valid number.");
+                    JOptionPane.showMessageDialog(parentWindow, "Invalid number format.");
                 }
             }
         });
+        
 
         buttonPanel.add(removeBtn);
         buttonPanel.add(Box.createVerticalStrut(5));
@@ -145,9 +164,18 @@ public class GoalPanel extends JPanel {
     }
 
     public void refresh() {
+        double currentProgress = goal.getProgress();
+        double targetAmount = goal.getTarget();
+
         progressBar.setValue(getProgressPercent());
-        progressBar.setString(String.format("₱%.2f / ₱%.2f", goal.getProgress(), goal.getTarget()));
+        progressBar.setString(String.format("₱%.2f / ₱%.2f", currentProgress, targetAmount));
         messageLabel.setText(getEncouragementMessage());
+        
+        if (currentProgress >= targetAmount) {
+            addBtn.setVisible(false);
+        } else {
+            addBtn.setVisible(true);
+        }
     }
 
     private int getProgressPercent() {

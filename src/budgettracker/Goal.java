@@ -58,15 +58,6 @@ public class Goal {
         }
     }
 
-    public void applyTransaction(Transaction t) {
-        if (t.getType() == Transaction.Type.INCOME || t.getType() == Transaction.Type.EXPENSE) {
-            progress += t.getAmount();
-            if (progress > target) {
-                progress = target;
-            }
-        }
-    }
-
     // Check if goal is completed
     public boolean isCompleted() {
         return progress >= target;
