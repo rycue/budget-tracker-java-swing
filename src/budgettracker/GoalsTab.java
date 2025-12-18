@@ -79,6 +79,22 @@ public class GoalsTab extends JPanel {
     }
 
     private void removeGoal(Goal goal, GoalPanel panel) {
+        int userId = Integer.parseInt(AccountManager.getUserId());
+
+        if (goal.getProgress() <= 0) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Delete empty goal: " + goal.getName() + "?",
+                    "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (DataHandler.deleteGoal(goal.getGoalID(), userId, false, 0)) {
+                    refreshAll();
+                }
+            }
+            return; // Exit here
+        }
+
+        // Standard logic for goals WITH money
         String[] options = {"Refund to Balance", "Permanent Delete", "Cancel"};
         int choice = JOptionPane.showOptionDialog(this,
                 "This goal has ₱" + String.format("%.2f", goal.getProgress()) + " saved. What should we do?",
@@ -87,20 +103,18 @@ public class GoalsTab extends JPanel {
                 JOptionPane.QUESTION_MESSAGE,
                 null, options, options[0]);
 
-        if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-            return; // Exit if Cancel
-        }
-        boolean refund = (choice == 0);
-        int userId = Integer.parseInt(AccountManager.getUserId());
-
-        if (DataHandler.deleteGoal(goal.getGoalID(), userId, refund, goal.getProgress())) {
-            // Refresh all tabs so the balance and goal list update instantly
-            Window window = SwingUtilities.getWindowAncestor(this);
-            if (window instanceof BudgetTracker) {
-                ((BudgetTracker) window).refreshAllTabs();
+        if (choice == 0 || choice == 1) {
+            boolean refund = (choice == 0);
+            if (DataHandler.deleteGoal(goal.getGoalID(), userId, refund, goal.getProgress())) {
+                refreshAll();
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Error: Could not delete goal.");
+        }
+    }
+
+    private void refreshAll() {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof BudgetTracker) {
+            ((BudgetTracker) window).refreshAllTabs();
         }
     }
     
