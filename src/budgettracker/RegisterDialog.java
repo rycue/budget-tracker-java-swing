@@ -71,7 +71,7 @@ public class RegisterDialog extends JDialog {
 
 
     private void attemptRegistration() {
-        // --- 1. Data Validation (Keeping your existing logic) ---
+        // --- Data Validation ---
         if (fullField.getText().isBlank()) {
             showError("Full name is required.");
             return;
@@ -136,13 +136,10 @@ public class RegisterDialog extends JDialog {
                 this.dispose();
             }
         } else {
-            // FIX: Add this else block to handle the "Silent Failure"
-            // We proactively suggest checking the email specifically
             showError("Registration failed. This email might already be in use.");
         }
     }
 
-    // --- Helper Methods (Keeping your existing styling/utility methods) ---
     private boolean isValidEmail(String email) {
         return EMAIL_PATTERN.matcher(email).matches();
     }
@@ -152,7 +149,6 @@ public class RegisterDialog extends JDialog {
     }
 
     private JPanel makeField(String label, JComponent field) {
-        // ... (Your existing makeField implementation) ...
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         p.setBackground(Color.decode("#121212"));
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));

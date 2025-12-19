@@ -42,7 +42,6 @@ public class GoalPanel extends JPanel {
         long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(start, today);
         String dateStr = start.toString();
 
-        // Fix for future dates in DB: treat as Today if daysDiff is 0 or less
         if (daysDiff <= 0) {
             return "since " + dateStr + " (Today)";
         } else if (daysDiff == 1) {
@@ -53,7 +52,7 @@ public class GoalPanel extends JPanel {
     }
 
     private void initUI() {
-        // --- ROW 1: TITLE AND DATA READOUT ---
+        // --- TITLE AND DATA ---
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -73,14 +72,14 @@ public class GoalPanel extends JPanel {
         header.add(titleLabel, BorderLayout.WEST);
         header.add(dataHud, BorderLayout.EAST);
 
-        // --- NEW ROW: DATE INDICATOR (Below Title) ---
+        // --- DATE INDICATOR ---
         dateLabel = new JLabel();
         dateLabel.setForeground(new Color(150, 200, 150));
         dateLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
         dateLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         dateLabel.setBorder(new EmptyBorder(2, 5, 0, 0));
 
-        // --- ROW 2: MESSAGE AND ACTION BUTTONS ---
+        // --- MESSAGE AND ACTION BUTTONS ---
         JPanel actionRow = new JPanel(new BorderLayout());
         actionRow.setOpaque(false);
         actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -109,7 +108,7 @@ public class GoalPanel extends JPanel {
 
         // STACKING THE COMPONENTS
         add(header);
-        add(dateLabel); // The indicator you requested
+        add(dateLabel);
         add(Box.createVerticalStrut(5));
         add(actionRow);
         add(Box.createVerticalGlue());
@@ -121,7 +120,6 @@ public class GoalPanel extends JPanel {
         targetLabel.setText(String.format("%.2f", goal.getTarget()));
         currentLabel.setText(String.format("%.2f", goal.getProgress()));
 
-        // Update both text fields separately
         dateLabel.setText(getAgeStatus());
         messageLabel.setText("> " + getEncouragementMessage());
 
@@ -168,7 +166,6 @@ public class GoalPanel extends JPanel {
                 }
             }
         }
-
         g2.setColor(Color.WHITE);
         g2.drawString(percentText, textX, textY);
         g2.dispose();

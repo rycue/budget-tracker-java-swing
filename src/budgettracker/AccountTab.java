@@ -10,7 +10,7 @@ public class AccountTab extends JPanel {
     private JButton logoutBtn, toggleBtn, editProfileBtn, resetDataBtn, changePasswordBtn, deleteAccountBtn;
 
     public AccountTab() {
-        // 1. INITIALIZE BUTTONS
+        // INITIALIZE BUTTONS
         editProfileBtn = new JButton("Edit Profile");
         logoutBtn = new JButton("Logout");
         changePasswordBtn = new JButton("Change Password");
@@ -23,7 +23,7 @@ public class AccountTab extends JPanel {
         styleActionButton(resetDataBtn);
         styleActionButton(deleteAccountBtn);
 
-        // 2. MAIN PANEL SETUP
+        // MAIN PANEL SETUP
         setBackground(Color.decode("#121212"));
         setLayout(new BorderLayout());
 
@@ -32,7 +32,7 @@ public class AccountTab extends JPanel {
         mainContainer.setBackground(Color.decode("#121212"));
         mainContainer.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
-        // 3. PROFILE CARD
+        // PROFILE CARD
         JPanel profileCard = createCard("Profile Information");
         nameLbl = new JLabel("Name: --");
         emailLbl = new JLabel("Email: --");
@@ -42,7 +42,7 @@ public class AccountTab extends JPanel {
         profileCard.add(Box.createVerticalStrut(10));
         profileCard.add(emailLbl);
 
-        // 4. SECURITY CARD
+        // SECURITY CARD
         JPanel securityCard = createCard("Security");
         passwordLbl = new JLabel("Password:");
         styleLabel(passwordLbl);
@@ -53,7 +53,6 @@ public class AccountTab extends JPanel {
         passPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         passPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         
-
         passwordField = new JPasswordField(20);
         passwordField.setText("------------");
         passwordField.setEditable(false);
@@ -91,13 +90,13 @@ public class AccountTab extends JPanel {
         securityCard.add(Box.createVerticalStrut(10));
         securityCard.add(passPanel);
 
-        // 5. ACCOUNT DETAILS CARD
+        // ACCOUNT DETAILS CARD
         JPanel accountCard = createCard("Account Details");
         createdLbl = new JLabel("Account Created: --");
         styleLabel(createdLbl);
         accountCard.add(createdLbl);
 
-        // 6. ACTIONS CARD
+        // ACTIONS CARD
         JPanel actionsCard = createCard("Actions");
         JPanel actionButtonBox = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 10));
         actionButtonBox.setBackground(Color.decode("#1b1b1b"));
@@ -108,7 +107,7 @@ public class AccountTab extends JPanel {
         actionButtonBox.add(logoutBtn);
         actionsCard.add(actionButtonBox);
 
-        // 7. DANGER ZONE CARD
+        // DANGER ZONE CARD
         JPanel dangerCard = createCard("Danger Zone");
         styleDangerTitle(dangerCard);
 
@@ -121,7 +120,7 @@ public class AccountTab extends JPanel {
         dangerButtonBox.add(deleteAccountBtn);
         dangerCard.add(dangerButtonBox);
 
-        // 8. ADD EVERYTHING TO MAIN VIEW
+        // ADD EVERYTHING TO MAIN VIEW
         mainContainer.add(profileCard);
         mainContainer.add(Box.createVerticalStrut(15));
         mainContainer.add(securityCard);
@@ -133,7 +132,7 @@ public class AccountTab extends JPanel {
         mainContainer.add(dangerCard);
         mainContainer.add(Box.createVerticalGlue());
 
-        // 9. LOGIC - RESTORED LOGOUT & EDIT POPUP
+        // LOGIC - RESTORED LOGOUT & EDIT POPUP
         editProfileBtn.addActionListener(e -> showEditProfileDialog());
 
         logoutBtn.addActionListener(e -> {
@@ -148,7 +147,7 @@ public class AccountTab extends JPanel {
             }
         });
         
-        // 10. DELETE ACCOUNT
+        // DELETE ACCOUNT
         deleteAccountBtn.addActionListener(e -> {
             // 1. Double Confirmation (Danger Zone!)
             int confirm = JOptionPane.showConfirmDialog(this, """
@@ -161,13 +160,13 @@ public class AccountTab extends JPanel {
                 if (userIdStr != null) {
                     int userId = Integer.parseInt(userIdStr);
 
-                    // 2. Execute the Transactional Delete
+                    // Execute the Transactional Delete
                     boolean success = DataHandler.deleteFullAccount(userId);
 
                     if (success) {
                         JOptionPane.showMessageDialog(this, "Your account has been wiped from the system.");
 
-                        // 3. Force Logout and redirect to Login
+                        // Force Logout and redirect to Login
                         AccountManager.logout();
                         Window mainFrame = SwingUtilities.getWindowAncestor(this);
                         if (mainFrame != null) {
@@ -181,7 +180,7 @@ public class AccountTab extends JPanel {
             }
         });
         
-        // 11. CLEAR DATA
+        // CLEAR DATA
         resetDataBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, """
                                                               Are you sure you want to wipe all transactions and goals?
@@ -226,18 +225,18 @@ public class AccountTab extends JPanel {
         content.setBackground(Color.decode("#1b1b1b"));
         content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // 1. Full Name Field - PRE-FILLED
+        // Full Name Field - PRE-FILLED
         JLabel nameLabel = new JLabel("Full Name:");
         styleLabel(nameLabel);
         JTextField nameField = new JTextField(originalName, 20); // Pre-fill with originalName
         styleTextField(nameField);
 
-        // 2. Save Button - DISABLED BY DEFAULT
+        // Save Button - DISABLED BY DEFAULT
         JButton saveBtn = new JButton("Save Changes");
         styleActionButton(saveBtn);
         saveBtn.setEnabled(false); // Start disabled
 
-        // 3. DocumentListener to detect changes
+        // DocumentListener to detect changes
         nameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             private void check() {
                 // Only enable if name is different from original AND not empty
@@ -258,13 +257,10 @@ public class AccountTab extends JPanel {
             }
         });
         
-        // Inside showEditProfileDialog() ...
-// Step A: Clear any old listeners to prevent the "Double Popup"
         for (java.awt.event.ActionListener al : changePasswordBtn.getActionListeners()) {
             changePasswordBtn.removeActionListener(al);
         }
 
-// Step B: Add the fresh listener for this specific dialog session
         changePasswordBtn.addActionListener(e -> {
             boolean success = performPasswordChange();
             if (success) {
@@ -272,8 +268,6 @@ public class AccountTab extends JPanel {
             }
         });
 
-
-        // 5. Save Button Logic
         saveBtn.addActionListener(e -> {
             String newName = nameField.getText().trim();
             int userId = Integer.parseInt(AccountManager.getUserId());
@@ -286,7 +280,6 @@ public class AccountTab extends JPanel {
             }
         });
 
-        // UI Assembly
         content.add(nameLabel);
         content.add(Box.createVerticalStrut(10));
         content.add(nameField);
@@ -398,11 +391,11 @@ public class AccountTab extends JPanel {
     
     
     private boolean performPasswordChange() {
+        
         // Create the masked fields
         JPasswordField pf1 = new JPasswordField();
         JPasswordField pf2 = new JPasswordField();
 
-        // Style them to match your dark theme (optional but recommended)
         styleTextField(pf1);
         styleTextField(pf2);
 
@@ -412,7 +405,6 @@ public class AccountTab extends JPanel {
             "Confirm New Password:", pf2
         };
 
-        // Show the dialog with the password fields
         int option = JOptionPane.showConfirmDialog(this, message, "Change Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (option != JOptionPane.OK_OPTION) {
@@ -432,7 +424,7 @@ public class AccountTab extends JPanel {
             return false;
         }
 
-        // 3. Save
+        // Save
         int userId = Integer.parseInt(AccountManager.getUserId());
         if (DataHandler.updateUserPassword(userId, newPass)) {
             AccountManager.updateLocalPassword(newPass);

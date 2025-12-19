@@ -155,8 +155,6 @@ public class LoginDialog extends JDialog {
             }
         });
         
-        
-
         registerBtn.addActionListener(e -> new RegisterDialog(this).setVisible(true));
 
         forgotBtn.addActionListener(e -> {
@@ -167,7 +165,7 @@ public class LoginDialog extends JDialog {
                 return;
             }
 
-            // Best Practice: Don't trust local state; check the DB
+            // check the DB
             UserAccount targetUser = SQLConnector.getInstance().findUserByEmail(email);
 
             if (targetUser != null) {

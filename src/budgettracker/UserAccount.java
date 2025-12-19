@@ -53,7 +53,5 @@ public class UserAccount {
     public String getSecurityQuestion() { return securityQuestion; }
     public String getSecurityAnswer() { return securityAnswer; }
     
-    // Removed getUsername() and getMobile() since they no longer exist
-    
     public void setPassword(String newPass) { this.password = newPass; }
 }

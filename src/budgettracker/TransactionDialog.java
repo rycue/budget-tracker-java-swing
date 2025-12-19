@@ -85,13 +85,12 @@ public class TransactionDialog extends JDialog {
                 return;
             }
             
-            // Validate amount is positive
             if (amount <= 0) {
                 showError("Amount must be greater than zero.");
                 return;
             }
             
-            if (amount > 1000000000) { // 1 billion limit
+            if (amount > 1000000000) {
                 showError("Amount is too large. Please enter a reasonable amount.");
                 return;
             }

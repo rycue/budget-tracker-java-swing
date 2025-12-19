@@ -29,7 +29,6 @@ public class AnalyticsTab extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.BLACK);
 
-        // Simple 1-column layout for the single summary card
         cardsPanel = new JPanel(new GridLayout(1, 1));
         cardsPanel.setBackground(Color.BLACK);
 
@@ -41,7 +40,6 @@ public class AnalyticsTab extends JPanel {
 
         setupUIStructure();
 
-//        String[] columns = {"Date", "Category", "Amount", "Balance", "Type"};
         String[] columns = {"Date", "Category", "Amount", "Balance", "Impact %"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -91,12 +89,11 @@ public class AnalyticsTab extends JPanel {
         List<Transaction> all = (dashboardTab.getTransactions() != null)
                 ? dashboardTab.getTransactions() : new ArrayList<>();
 
-        // 1. If empty, clear everything and GTFO (Get The Funk Out)
+        // If empty, clear everything
         if (all.isEmpty()) {
             tableModel.setRowCount(0);
             summaryCard.setText("<html><body style='color:#00FF00; font-family:Monospaced; padding:15px;'>&gt; NO_DATA_FOUND</body></html>");
 
-            // Also clear the combo boxes so they don't hold "Ghost Years"
             isUpdatingFilters = true;
             monthFilter.removeAllItems();
             yearFilter.removeAllItems();
@@ -111,7 +108,6 @@ public class AnalyticsTab extends JPanel {
         String monthSelected = (String) monthFilter.getSelectedItem();
         String yearSelected = (String) yearFilter.getSelectedItem();
 
-        // 1. Filter the list
         List<Transaction> filtered = all.stream().filter(t -> {
             boolean mMatch = monthSelected.equals("All Months") || t.getDate().getMonth().toString().equalsIgnoreCase(monthSelected);
             boolean yMatch = yearSelected.equals("All Years") || String.valueOf(t.getDate().getYear()).equals(yearSelected);
@@ -120,7 +116,6 @@ public class AnalyticsTab extends JPanel {
                 .sorted((t1, t2) -> t2.getDate().compareTo(t1.getDate())) // Reversed: t2 compared to t1
                 .collect(Collectors.toList());
 
-        // 2. Calculate total expenses for this filtered view to get the "Impact" base
         double totalMonthlyExpense = filtered.stream()
                 .filter(t -> t.getType() == Transaction.Type.EXPENSE)
                 .mapToDouble(Transaction::getAmount).sum();
@@ -128,7 +123,6 @@ public class AnalyticsTab extends JPanel {
         tableModel.setRowCount(0);
         double runningBalance = 0.0;
 
-        // Calculate starting balance for the running total
         if (!filtered.isEmpty()) {
             LocalDate firstDate = filtered.get(0).getDate();
             runningBalance = all.stream().filter(t -> t.getDate().isBefore(firstDate))
@@ -138,7 +132,6 @@ public class AnalyticsTab extends JPanel {
         for (Transaction t : filtered) {
             runningBalance += (t.getType() == Transaction.Type.INCOME ? t.getAmount() : -t.getAmount());
 
-            // Calculate Impact String
             String impactStr = "---";
             if (t.getType() == Transaction.Type.EXPENSE && totalMonthlyExpense > 0) {
                 double impact = (t.getAmount() / totalMonthlyExpense) * 100;
@@ -148,9 +141,9 @@ public class AnalyticsTab extends JPanel {
             tableModel.addRow(new Object[]{
                 t.getDate().toString(),
                 t.getCategory(),
-                t, // The transaction object for the renderer
+                t, 
                 "₱" + df.format(runningBalance),
-                impactStr // Our new "Helper" column
+                impactStr 
             });
         }
 
@@ -189,7 +182,6 @@ public class AnalyticsTab extends JPanel {
 
         Month m = Month.valueOf(monthSelected);
 
-        // Filter based on Month and Year selection
         List<Transaction> monthlyList = all.stream()
                 .filter(t -> t.getDate().getMonth().equals(m))
                 .filter(t -> yearSelected.equals("All Years") || String.valueOf(t.getDate().getYear()).equals(yearSelected))
@@ -201,7 +193,6 @@ public class AnalyticsTab extends JPanel {
         double expense = monthlyList.stream()
                 .filter(t -> t.getType() == Transaction.Type.EXPENSE).mapToDouble(Transaction::getAmount).sum();
 
-        // RE-ADDED: Identify the "Culprit" (Top Expense Category)
         String topCategory = monthlyList.stream()
                 .filter(t -> t.getType() == Transaction.Type.EXPENSE)
                 .collect(Collectors.groupingBy(Transaction::getCategory, Collectors.summingDouble(Transaction::getAmount)))
@@ -238,7 +229,6 @@ public class AnalyticsTab extends JPanel {
         html.append("<span style='font-size:30pt; font-weight:bold; color:").append(netColor).append(";'>₱")
                 .append(df.format(net)).append("</span><br><br>");
 
-        // RE-ADDED: The culprit display
         html.append("<span style='font-size:12pt; color:#888;'>MAIN_EXPENSE: ").append(topCategory).append("</span><br><br>");
 
         String status = (net >= 0) ? "RESULT: POSITIVE_FLOW" : "RESULT: NEGATIVE_FLOW";
@@ -284,7 +274,6 @@ public class AnalyticsTab extends JPanel {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
 
-            // Style the Amount Column (Index 2)
             if (col == 2 && value instanceof Transaction) {
                 Transaction t = (Transaction) value;
                 boolean isInc = t.getType() == Transaction.Type.INCOME;
@@ -293,7 +282,7 @@ public class AnalyticsTab extends JPanel {
                     setForeground(isInc ? new Color(50, 255, 50) : new Color(255, 80, 80));
                 }
                 setHorizontalAlignment(SwingConstants.RIGHT);
-            } // Style the Impact Column (Index 4)
+            } 
             else if (col == 4) {
                 setHorizontalAlignment(SwingConstants.CENTER);
                 if (!isSelected) {

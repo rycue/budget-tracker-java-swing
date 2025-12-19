@@ -91,7 +91,7 @@ public class GoalsTab extends JPanel {
                     refreshAll();
                 }
             }
-            return; // Exit here
+            return;
         }
 
         // Standard logic for goals WITH money

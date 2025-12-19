@@ -51,7 +51,6 @@ public class Goal {
     }
 
 
-    // Add manual progress (from + button)
     public void addManualProgress(double amount) {
         progress += amount;
         if (progress > target) {
@@ -59,12 +58,10 @@ public class Goal {
         }
     }
 
-    // Check if goal is completed
     public boolean isCompleted() {
         return progress >= target;
     }
 
-    // Reset goal progress
     public void reset() {
         progress = 0;
     }

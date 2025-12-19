@@ -29,7 +29,6 @@ public class DashboardTab extends JPanel {
     private AnalyticsTab analyticsTab;
     private GoalsTab goalsTab;
 
-    // Fields for the Empty State Switcher
     private JPanel tableContainer;
     private CardLayout cl;
 
@@ -225,7 +224,6 @@ public class DashboardTab extends JPanel {
         }
     }
     public List<Transaction> getTransactions() {
-        // Best practice: Never return null for a List, return an empty list instead
         return (transactions != null) ? transactions : new ArrayList<>();
     }
 
@@ -331,13 +329,10 @@ public class DashboardTab extends JPanel {
         double totalIncome = 0;
         double totalExpense = 0;
 
-        // Use 'this.transactions' to be explicit within the class
         for (Transaction t : this.transactions) {
             double amt = t.getAmount();
             if (t.getType() == Transaction.Type.INCOME) {
                 totalIncome += amt;
-                // Your specific logic: Goal Refunds are technically 'returning' money, 
-                // but your updateTotals treats them as negative expenses.
                 if ("Goal Refund".equals(t.getCategory())) {
                     totalExpense -= amt;
                 }
@@ -364,16 +359,14 @@ public class DashboardTab extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            removeAll(); // Clear previous state
+            removeAll();
 
-            // Get the transaction for the current row
             List<Transaction> thisMonth = transactions.stream()
                     .filter(t -> YearMonth.from(t.getDate()).equals(YearMonth.now()))
                     .collect(Collectors.toList());
 
             if (row < thisMonth.size()) {
                 Transaction t = thisMonth.get(row);
-                // Hide button for Goal Savings and Goal Refunds
                 if ("Goal Savings".equals(t.getCategory()) || "Goal Refund".equals(t.getCategory())) {
                     return this; // Return empty panel
                 }

@@ -100,7 +100,7 @@ public class ForgotPasswordDialog extends JDialog {
 
         mainPanel.revalidate();
         mainPanel.repaint();
-        pack(); // Resize to fit new content
+        pack();
     }
 
     private void styleField(JTextField field) {

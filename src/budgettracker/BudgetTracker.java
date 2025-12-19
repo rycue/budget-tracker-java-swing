@@ -1,6 +1,5 @@
 package budgettracker;
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
@@ -52,29 +51,27 @@ public class BudgetTracker extends JFrame {
         
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         
-        // --- ONE SINGLE BOTTOM PANEL (Enterprise Best Practice) ---
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         bottomPanel.setBackground(Color.BLACK);
 
-        // 1. Initialize Toggle Button once
+        // Initialize Toggle Button once
         editToggleBtn = new JButton("EDIT MODE: OFF");
         styleSecondaryButton(editToggleBtn);
         editToggleBtn.setVisible(true);
 
-        // 2. Initialize Add Button once
+        // Initialize Add Button once
         JButton addTransactionBtn = new JButton("+");
         addTransactionBtn.setFont(new Font("Arial", Font.BOLD, 38));
         addTransactionBtn.setPreferredSize(new Dimension(64, 48));
         styleButton(addTransactionBtn);
 
-        // 3. Add to panel and then to frame
+        // Add to panel and then to frame
         bottomPanel.add(editToggleBtn);
         bottomPanel.add(addTransactionBtn);
         add(bottomPanel, BorderLayout.SOUTH);
         add(tabPanel, BorderLayout.NORTH);     
         add(contentPanel, BorderLayout.CENTER);
 
-        // --- ATTACH LISTENERS ONCE ---
         addTransactionBtn.addActionListener(e -> openTransactionDialog());
 
         editToggleBtn.addActionListener(e -> {
@@ -85,16 +82,14 @@ public class BudgetTracker extends JFrame {
             editToggleBtn.setForeground(active ? Color.WHITE : Color.GREEN);
         });
 
-        // Dashboard Switcher
         dashboardBtn.addActionListener(e -> {
             cardLayout.show(contentPanel, "Dashboard");
             setActiveTab(dashboardBtn, goalsBtn, analyticsBtn, accountBtn);
             editToggleBtn.setVisible(true);
         });
 
-        // Shared Switcher for other tabs to save space
         ActionListener tabResetListener = e -> {
-            String cmd = e.getActionCommand(); // Make sure your buttons have ActionCommands set
+            String cmd = e.getActionCommand();
             cardLayout.show(contentPanel, cmd);
 
             if (cmd.equals("Goals")) {
@@ -108,7 +103,6 @@ public class BudgetTracker extends JFrame {
             resetEditMode();
         };
 
-        // You MUST set these commands for the shared listener to work
         goalsBtn.setActionCommand("Goals");
         analyticsBtn.setActionCommand("Analytics");
         accountBtn.setActionCommand("Account");
@@ -206,7 +200,6 @@ public class BudgetTracker extends JFrame {
         if (login.isSuccess()) {
             BudgetTracker mainApp = new BudgetTracker();
 
-            // Load data immediately after login
             mainApp.dashboardTab.loadFromDatabase();
             String uid = AccountManager.getUserId();
             if (uid != null) {
@@ -220,18 +213,18 @@ public class BudgetTracker extends JFrame {
     }
     
     public void refreshAllTabs() {
-        // 1. Reload transactions into the Dashboard
+        // Reload transactions into the Dashboard
         if (dashboardTab != null) {
             dashboardTab.loadFromDatabase();
         }
 
-        // 2. Reload goals
+        // Reload goals
         String uid = AccountManager.getUserId();
         if (uid != null && goalsTab != null) {
             goalsTab.loadExistingGoals(Integer.parseInt(uid));
         }
 
-        // 3. Refresh the Account UI labels
+        // Refresh the Account UI labels
         if (accountTab != null) {
             accountTab.refresh();
         }

@@ -19,7 +19,7 @@ public class DataHandler {
             String secretQuestion,
             String secretAnswer,
             LocalDateTime createdAt) {
-        System.out.println("RAM: New account created at " + createdAt);
+        System.out.println("New account created at " + createdAt);
 
         if (email == null || password == null || secretAnswer == null) {
             System.err.println("Registration failed: Required fields cannot be null.");
@@ -73,7 +73,7 @@ public class DataHandler {
                 return null;
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("DataHandler Error during login: " + e.getMessage());
+            System.err.println("LOG: DataHandler Error during login: " + e.getMessage());
             return null;
         }
     }
@@ -201,9 +201,8 @@ public class DataHandler {
         return 1;
     }
 
-    // GOAL SECTION (UPDATED FOR created_at)
+    // GOAL SECTION
     public static int saveGoal(Goal goal, int userId) {
-        // RENAMED COLUMN: deadline -> created_at
         String sql = "INSERT INTO goals (user_id, title, target_amount, current_amount, created_at) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = SQLConnector.getInstance().getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -211,7 +210,6 @@ public class DataHandler {
             ps.setString(2, goal.getName());
             ps.setDouble(3, goal.getTarget());
             ps.setDouble(4, goal.getProgress());
-            // Now using the goal's creation date
             ps.setDate(5, java.sql.Date.valueOf(goal.getDateCreated()));
 
             ps.executeUpdate();
@@ -235,7 +233,6 @@ public class DataHandler {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                // FETCH FROM THE RENAMED COLUMN: created_at
                 java.sql.Date sqlDate = rs.getDate("created_at");
                 LocalDate createdAt = (sqlDate != null) ? sqlDate.toLocalDate() : LocalDate.now();
 
@@ -244,7 +241,7 @@ public class DataHandler {
                         rs.getString("title"),
                         rs.getDouble("target_amount"),
                         rs.getDouble("current_amount"),
-                        createdAt // Mapping the DB date to the Goal object
+                        createdAt
                 ));
             }
         } catch (SQLException e) {

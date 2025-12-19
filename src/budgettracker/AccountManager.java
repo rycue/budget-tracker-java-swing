@@ -29,12 +29,11 @@ public class AccountManager {
 
             if (realID != null) {
                 loggedInUser = DataHandler.loadUserAccount(realID);
-                return true; // Path 1: Everything worked
+                return true;
             }
-            // If we are here, registration worked but login fetch failed.
-            return false; // Path 2: Fail because we couldn't get the ID
+            return false;
         } else {
-            return false; // Path 3: Registration failed
+            return false;
         }
     }
     
@@ -97,13 +96,10 @@ public class AccountManager {
     }
     
     public static boolean resetUserPassword(int userID, String plainTextPassword) {
-        // 1. Hash the new password using your existing BCrypt utility
         String newHash = PasswordHasher.hashPassword(plainTextPassword);
 
-        // 2. Update the Database
         boolean success = SQLConnector.getInstance().updatePassword(userID, newHash);
 
-        // 3. Sync the local object so the app session has the new credentials
         if (success && loggedInUser != null && loggedInUser.getUserID() == userID) {
             loggedInUser.setPassword(newHash);
         }
@@ -112,13 +108,10 @@ public class AccountManager {
     }
     
     public static boolean resetPasswordExternal(UserAccount user, String newPlainTextPassword) {
-        // 1. Hash the new password
         String hashed = PasswordHasher.hashPassword(newPlainTextPassword);
 
-        // 2. Update Database
         boolean success = SQLConnector.getInstance().updatePassword(user.getUserID(), hashed);
 
-        // 3. Sync local object (if this happens to be the logged in user)
         if (success && loggedInUser != null && loggedInUser.getUserID() == user.getUserID()) {
             loggedInUser.setPassword(hashed);
         }
