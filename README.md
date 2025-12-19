@@ -49,7 +49,7 @@ CREATE TABLE goals (
     title VARCHAR(255) NOT NULL,
     target_amount DECIMAL(10, 4) NOT NULL,
     current_amount DECIMAL(10, 4) DEFAULT 0.0000,
-    deadline DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
